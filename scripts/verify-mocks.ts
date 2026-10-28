@@ -63,6 +63,9 @@ async function main() {
   const tabNew = NftListResponseSchema.parse((await list({ tab: 'new', pageSize: '48' })).body)
   check('tab "new"', tabNew.total > 0 && tabNew.items.every((n) => n.isNew))
 
+  const kurio = NftListResponseSchema.parse((await list({ collection: 'Kurio Apes', pageSize: '48' })).body)
+  check('collection filter', kurio.total > 0 && kurio.items.every((n) => n.collection === 'Kurio Apes'), `${kurio.total} results`)
+
   const bad = await list({ minPrice: '5', maxPrice: '1' })
   check('min > max -> 400', bad.status === 400)
 

@@ -7,6 +7,8 @@ import { OutOfScopeLink } from '@/shared/ui/out-of-scope'
 /** Mobile tab bar from the Figma: home, favorites, scan (centre), cart, profile. */
 export function MobileTabBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
+  // The NFT detail page has its own bottom buy bar instead (Figma).
+  if (pathname.startsWith('/nfts/')) return null
   const item = 'grid size-11 place-items-center rounded-full text-text-secondary transition-colors'
   const current = 'text-text-accent'
 

@@ -1,7 +1,7 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query'
 
 import { toNftListParams, type CatalogSearch } from '@/contracts/catalog'
-import { fetchNftDetail, fetchNftList } from './api'
+import { fetchCollectionNfts, fetchNftDetail, fetchNftList } from './api'
 
 /**
  * Public catalog data: not tied to a user, so it is shared across sessions.
@@ -12,6 +12,7 @@ export const catalogKeys = {
   all: ['nfts'] as const,
   lists: () => [...catalogKeys.all, 'list'] as const,
   list: (search: CatalogSearch) => [...catalogKeys.lists(), toNftListParams(search)] as const,
+  collection: (name: string) => [...catalogKeys.all, 'collection', name] as const,
   details: () => [...catalogKeys.all, 'detail'] as const,
   detail: (id: string) => [...catalogKeys.details(), id] as const,
 }
@@ -31,4 +32,12 @@ export const nftDetailQueryOptions = (id: string) =>
     queryKey: catalogKeys.detail(id),
     queryFn: ({ signal }) => fetchNftDetail(id, signal),
     staleTime: 30_000,
+  })
+
+/** Related items: 6 so that 5 remain after removing the current NFT. */
+export const collectionNftsQueryOptions = (collection: string) =>
+  queryOptions({
+    queryKey: catalogKeys.collection(collection),
+    queryFn: ({ signal }) => fetchCollectionNfts(collection, 6, signal),
+    staleTime: 60_000,
   })

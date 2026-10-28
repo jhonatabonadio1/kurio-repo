@@ -30,6 +30,8 @@ const csvList = z.string().transform((v) => v.split(',').filter(Boolean))
 const ListQuerySchema = z
   .object({
     q: z.string().trim().max(60).optional(),
+    /** Exact collection name ("Mais desta coleção"). */
+    collection: z.string().trim().max(60).optional(),
     tab: CatalogTabSchema.default('all'),
     category: csvList.pipe(z.array(CategorySchema)).optional(),
     chain: csvList.pipe(z.array(ChainSchema)).optional(),
@@ -70,6 +72,7 @@ export const catalogHandlers = [
             const haystack = normalizeText(`${nft.name} ${nft.collection} ${nft.tokenId} ${nft.creator.name}`)
             if (!haystack.includes(term)) return false
           }
+          if (query.collection && nft.collection !== query.collection) return false
           if (query.tab === 'new' && !nft.isNew) return false
           if (query.tab === 'trending' && !nft.trending) return false
           return true
