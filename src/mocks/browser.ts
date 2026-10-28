@@ -1,18 +1,27 @@
 import { setupWorker } from 'msw/browser'
 
 import { env } from '@/env'
-import { systemHandlers } from './handlers/system'
+import { applyConfigFromUrl } from './config'
+import { db } from './db/store'
+import { restHandlers } from './handlers'
 import { createMockSocketServer } from './socket/socket-handler'
 
 export const mockSocketServer = createMockSocketServer({
   origin: env.socketUrl,
-  // Filled in when the session mock lands (day 2).
-  resolveToken: () => null,
+  resolveToken: (token) =>
+    db.read((s) => {
+      const session = s.sessions.find((x) => x.token === token)
+      return session && Date.parse(session.expiresAt) > Date.now() ? session.userId : null
+    }),
 })
 
-export const worker = setupWorker(...systemHandlers, mockSocketServer.handler)
+// A reset drops every socket; clients reconnect and reconcile with REST.
+db.onReset(() => mockSocketServer.disconnectAll())
+
+export const worker = setupWorker(...restHandlers, mockSocketServer.handler)
 
 export async function startMockWorker() {
+  applyConfigFromUrl(window.location.search)
   await worker.start({
     quiet: true,
     onUnhandledRequest: 'bypass',

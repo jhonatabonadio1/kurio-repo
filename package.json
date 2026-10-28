@@ -11,8 +11,9 @@
     "lint": "eslint .",
     "test:e2e": "playwright test",
     "test:e2e:update": "playwright test --update-snapshots",
-    "verify:socket": "node scripts/verify-socket-binding.ts",
-    "assets:figma": "node scripts/fetch-figma-assets.ts"
+    "verify:socket": "tsx --tsconfig tsconfig.app.json scripts/verify-socket-binding.ts",
+    "assets:figma": "node scripts/fetch-figma-assets.ts",
+    "verify:mocks": "tsx --tsconfig tsconfig.app.json scripts/verify-mocks.ts"
   },
   "dependencies": {
     "@fontsource-variable/roboto-mono": "^5.3.0",
