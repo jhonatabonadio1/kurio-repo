@@ -247,6 +247,37 @@ async function main() {
   check('scenario sold-out -> 409 AVAILABILITY_CONFLICT', soldOut.status === 409 && soldOut.body.error.code === 'AVAILABILITY_CONFLICT', soldOut.body.error?.code)
   setMockConfig({ scenario: 'default' })
 
+  // price-change scenario: the first quoted item gets 10% more expensive 4 s later.
+  // Fresh seed: earlier checks changed stock.
+  db.reset()
+  const carol = (await post('/auth/login', { email: 'alice@test.dev', password: 'Test@1234' })).body.token as string
+  const asCarol = { Authorization: `Bearer ${carol}` }
+  const sage = 'sage-nomad-009--1-50'
+  await api('POST', '/cart/items', { nftId: 'sage-nomad-009', editionId: sage, quantity: 1 }, asCarol)
+  setMockConfig({ scenario: 'price-change' })
+  const priceOf = () => db.read((s) => s.nfts.flatMap((n) => n.editions).find((e) => e.id === sage)!.price)
+  const priceBefore = priceOf()
+  const q6 = (await api('POST', '/quotes', { network: 'ethereum' }, asCarol)).body
+  await sleep(4_300)
+  check('scenario price-change: price goes up 10%', Number(priceOf()) > Number(priceBefore), `${priceBefore} -> ${priceOf()}`)
+  check('…published as nft.updated', recentEvents.at(-1)?.event.type === 'nft.updated')
+  const staleAfterPrice = await fetch(`${BASE}/orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'key-carol-0001', ...asCarol },
+    body: JSON.stringify({ quoteId: q6.id, walletId: 'wal_alice_primary', network: 'ethereum', buyer }),
+  }).then(async (r) => ({ status: r.status, body: (await r.json()) as Record<string, any> }))
+  check('…and the old quote can no longer be confirmed (409 QUOTE_STALE)', staleAfterPrice.status === 409 && staleAfterPrice.body.error.code === 'QUOTE_STALE')
+  setMockConfig({ scenario: 'default' })
+
+  // Control routes used by Playwright
+  const emit = (body: unknown) =>
+    fetch('http://localhost:5173/__mocks/emit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(async (r) => ({ status: r.status, body: (await r.json()) as Record<string, any> }))
+  const priced = await emit({ kind: 'nft-price', nftId: ape, editionId: ed('aberta'), price: '1.50' })
+  check('/__mocks/emit nft-price changes REST data and returns the event', priced.body.event?.version > 1 && (await (await fetch(`${BASE}/nfts/${ape}`)).json()).editions.find((e: any) => e.id === ed('aberta')).price === '1.50')
+  const replayed = await emit({ kind: 'replay' })
+  check('/__mocks/emit replay re-sends the same event (duplicate)', replayed.body.event?.eventId === priced.body.event?.eventId)
+  check('/__mocks/emit rejects unknown commands', (await emit({ kind: 'nope' })).status === 400)
+
   // Scenarios
   setMockConfig({ scenario: 'empty' })
   const empty = NftListResponseSchema.parse((await list()).body)

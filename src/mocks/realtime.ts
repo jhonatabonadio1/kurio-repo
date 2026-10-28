@@ -11,6 +11,7 @@ import type { OrderRecord } from './db/types'
 type RealtimeServer = {
   broadcast: (event: string, payload: unknown) => void
   emitToUser: (userId: string, event: string, payload: unknown) => void
+  disconnectAll: () => void
 }
 
 let server: RealtimeServer | null = null
@@ -67,4 +68,9 @@ export function publishOrderUpdated(order: OrderRecord) {
 export function replayEvent(entry: (typeof recentEvents)[number]) {
   if (entry.kind === 'broadcast') server?.broadcast(entry.event.type, entry.event)
   else if (entry.userId) server?.emitToUser(entry.userId, entry.event.type, entry.event)
+}
+
+/** Drops every socket (clients reconnect and reconcile with REST). */
+export function disconnectAllSockets() {
+  server?.disconnectAll()
 }

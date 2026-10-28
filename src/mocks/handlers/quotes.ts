@@ -8,7 +8,9 @@ import { checkCoupon, findCart, findEdition, resolveCartOwner, toCartResponse } 
 import { randomId } from '../lib/crypto'
 import { errors } from '../lib/http'
 import { readJson, zodFields } from '../lib/validation'
+import { getMockConfig } from '../config'
 import { withNetwork } from '../network'
+import { schedulePriceChange } from '../scenarios/price-change'
 
 const QUOTE_TTL_MS = 10 * 60_000
 
@@ -83,6 +85,8 @@ export const quoteHandlers = [
           ),
         }
       })
+      const firstLine = quote.lines[0]
+      if (getMockConfig().scenario === 'price-change' && firstLine) schedulePriceChange(firstLine.nftId, firstLine.editionId)
       return HttpResponse.json<Quote>(quote)
     }),
   ),
