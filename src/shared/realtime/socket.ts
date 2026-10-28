@@ -17,6 +17,8 @@ export async function createSocket(): Promise<Socket> {
     // The MSW Socket.IO binding only supports the WebSocket transport.
     transports: ['websocket'],
     autoConnect: false,
+    // One Manager per socket: a new session never shares listeners with the old one.
+    forceNew: true,
     reconnectionDelay: 500,
     reconnectionDelayMax: 5_000,
   })

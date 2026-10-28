@@ -7,10 +7,11 @@ const EnvSchema = z.object({
   VITE_SOCKET_URL: z.string().default(''),
 })
 
-const parsed = EnvSchema.parse(import.meta.env)
+// `?? {}` and the window check let Node scripts import app modules.
+const parsed = EnvSchema.parse(import.meta.env ?? {})
 
 export const env = {
   apiMocking: parsed.VITE_API_MOCKING === 'enabled',
   apiUrl: parsed.VITE_API_URL,
-  socketUrl: parsed.VITE_SOCKET_URL || window.location.origin,
+  socketUrl: parsed.VITE_SOCKET_URL || (typeof window === 'undefined' ? 'http://localhost:5173' : window.location.origin),
 } as const

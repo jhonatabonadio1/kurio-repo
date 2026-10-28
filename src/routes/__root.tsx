@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, Link, Outlet } from '@tanstack/react-router'
 
 import { SessionSync } from '@/features/auth/session-sync'
+import { RealtimeSync } from '@/features/realtime/realtime-sync'
 import { MobileTabBar } from '@/shared/layout/mobile-tab-bar'
 import { SiteFooter } from '@/shared/layout/site-footer'
 import { SiteHeader } from '@/shared/layout/site-header'
@@ -34,6 +35,7 @@ function RootLayout() {
       </div>
       <MobileTabBar />
       <SessionSync />
+      <RealtimeSync />
       <Toaster />
     </OutOfScopeProvider>
   )

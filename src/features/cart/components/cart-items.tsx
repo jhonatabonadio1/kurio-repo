@@ -9,6 +9,7 @@ import { NftArtwork } from '@/shared/ui/nft-artwork'
 import { QuantityStepper } from '@/shared/ui/quantity-stepper'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { useRemoveCartItem, useUpdateCartItem } from '../mutations'
+import { cartNotices, useCartNotices } from '../notices'
 
 const limitOf = (item: CartItem) => Math.min(item.edition.available, item.edition.maxPerOrder)
 // Figma columns: NFTs · Preço · Edições · Total · delete
@@ -21,6 +22,7 @@ const COLUMNS = 'md:grid-cols-[minmax(0,1fr)_110px_110px_120px_32px] md:gap-6'
 export function CartItems({ items }: { items: CartItem[] }) {
   const update = useUpdateCartItem()
   const remove = useRemoveCartItem()
+  const liveNotices = useCartNotices()
   const busy = (id: string) =>
     (update.isPending && update.variables?.itemId === id) || (remove.isPending && remove.variables === id)
 
@@ -37,6 +39,8 @@ export function CartItems({ items }: { items: CartItem[] }) {
         {items.map((item) => {
           const limit = limitOf(item)
           const overLimit = item.quantity > limit
+          const live = liveNotices.get(item.id)
+          const notice = live ?? item.notice
           return (
             <li
               key={item.id}
@@ -102,7 +106,7 @@ export function CartItems({ items }: { items: CartItem[] }) {
                 <Trash2 className="size-5" aria-hidden />
               </button>
 
-              {(overLimit || item.notice) && (
+              {(overLimit || notice) && (
                 <p role="status" className="col-span-3 flex items-start gap-2 px-4 pb-3 text-sm text-text-accent md:col-span-5 md:px-0">
                   <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
                   {overLimit ? (
@@ -116,10 +120,13 @@ export function CartItems({ items }: { items: CartItem[] }) {
                         {limit === 0 ? 'Remover do carrinho' : `Ajustar para ${limit}`}
                       </button>
                     </span>
-                  ) : item.notice?.kind === 'price' ? (
+                  ) : notice?.kind === 'price' ? (
                     <span>
-                      Preço atualizado{item.notice.previousPrice ? ` de ${formatEth(item.notice.previousPrice)}` : ''} para{' '}
-                      {formatEth(item.unitPrice)}.
+                      Preço atualizado{notice.previousPrice ? ` de ${formatEth(notice.previousPrice)}` : ''} para{' '}
+                      {formatEth(item.unitPrice)}. O resumo foi recalculado.{' '}
+                      <button type="button" className="font-bold underline" onClick={() => cartNotices.clear(item.id)}>
+                        Entendi
+                      </button>
                     </span>
                   ) : (
                     <span>A disponibilidade desta edição mudou.</span>
