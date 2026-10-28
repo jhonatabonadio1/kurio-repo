@@ -13,6 +13,7 @@ import {
 import { ApiError } from '@/contracts/api-error'
 import { sessionStore } from '@/shared/auth/session-store'
 import { cn } from '@/shared/lib/utils'
+import { AppleIcon, GoogleIcon } from '@/shared/ui/brand-icons'
 import { Button } from '@/shared/ui/button'
 import { OutOfScopeLink } from '@/shared/ui/out-of-scope'
 import { TextField } from '@/shared/ui/text-field'
@@ -190,7 +191,10 @@ export function SocialSignIn({ size }: { size: 'md' | 'lg' }) {
         Ou continue com
         <span className="h-px flex-1 bg-border" />
       </div>
-      {['Google', 'Apple'].map((provider) => (
+      {[
+        { provider: 'Google', Icon: GoogleIcon },
+        { provider: 'Apple', Icon: AppleIcon },
+      ].map(({ provider, Icon }) => (
         <OutOfScopeLink
           key={provider}
           feature={`Entrar com ${provider}`}
@@ -199,6 +203,7 @@ export function SocialSignIn({ size }: { size: 'md' | 'lg' }) {
             size === 'lg' ? 'h-[50px]' : 'h-10',
           )}
         >
+          <Icon className="size-5 shrink-0" />
           Continuar com {provider}
         </OutOfScopeLink>
       ))}
