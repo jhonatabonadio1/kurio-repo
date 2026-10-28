@@ -125,6 +125,8 @@ export type NftDetail = z.infer<typeof NftDetailSchema>
 // ---------- List query (URL state = API params) ----------
 
 const optional = <T extends z.ZodType>(schema: T) => schema.optional().catch(undefined)
+/** The URL carries lists as "a,b"; the app works with arrays. */
+const commaList = (value: unknown) => (typeof value === 'string' ? value.split(',').filter(Boolean) : value)
 
 /**
  * Catalog state in the URL. Every field is optional and invalid values are
@@ -134,8 +136,8 @@ const optional = <T extends z.ZodType>(schema: T) => schema.optional().catch(und
 export const CatalogSearchSchema = z.object({
   q: optional(z.string().trim().min(1).max(60)),
   tab: optional(CatalogTabSchema),
-  categories: optional(z.array(CategorySchema).min(1)),
-  chains: optional(z.array(ChainSchema).min(1)),
+  categories: optional(z.preprocess(commaList, z.array(CategorySchema).min(1))),
+  chains: optional(z.preprocess(commaList, z.array(ChainSchema).min(1))),
   minPrice: optional(EthAmountSchema),
   maxPrice: optional(EthAmountSchema),
   sort: optional(CatalogSortSchema),

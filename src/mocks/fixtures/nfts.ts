@@ -10,7 +10,7 @@ import {
 } from '@/contracts/catalog'
 import type { EthAmount } from '@/contracts/money'
 import { eth } from '@/shared/money/eth'
-import type { ArtworkKey } from '@/shared/ui/artwork-manifest'
+import { ARTWORK_ALT, type ArtworkKey } from '@/shared/ui/artwork-manifest'
 import { createRandom, type Random } from '../lib/random'
 import { slugify } from '../lib/text'
 
@@ -18,12 +18,6 @@ import { slugify } from '../lib/text'
 export const FIXTURE_NOW = Date.parse('2026-10-20T12:00:00.000Z')
 const DAY = 86_400_000
 
-export const ARTWORK_ALT: Record<ArtworkKey, string> = {
-  'emerald-ape': 'Macaco ilustrado com óculos redondos e jaqueta college verde',
-  'sage-nomad': 'Macaco ilustrado com chapéu bucket verde e moletom roxo',
-  'neon-vessel': 'Macaco ilustrado de pelo escuro com blazer creme e gola alta verde',
-  'golden-beat': 'Macaco ilustrado de pelo dourado com fones de ouvido verdes',
-}
 const ARTWORKS = Object.keys(ARTWORK_ALT) as ArtworkKey[]
 const COLLECTION_BY_ART: Record<ArtworkKey, string> = {
   'emerald-ape': 'Kurio Apes',
