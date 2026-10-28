@@ -3,6 +3,7 @@ import type { z } from 'zod'
 
 import { ApiError, ApiErrorBodySchema } from '@/contracts/api-error'
 import { env } from '@/env'
+import { getCartToken } from '@/shared/auth/cart-token'
 import { sessionStore } from '@/shared/auth/session-store'
 
 /** The only HTTP client. Every REST call goes through it (and through MSW in mock mode). */
@@ -18,6 +19,8 @@ const DEAD_SESSION_CODES = new Set(['SESSION_EXPIRED', 'INVALID_SESSION'])
 http.interceptors.request.use((config) => {
   const token = sessionStore.token()
   if (token) config.headers.set('Authorization', `Bearer ${token}`)
+  // Identifies the guest cart; ignored by the API when a user is signed in.
+  config.headers.set('X-Cart-Token', getCartToken())
   return config
 })
 

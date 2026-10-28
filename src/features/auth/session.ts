@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query'
 
 import { ApiError } from '@/contracts/api-error'
 import type { SessionInfo } from '@/contracts/account'
-import { sessionStore } from '@/shared/auth/session-store'
+import { sessionStore, useSessionToken } from '@/shared/auth/session-store'
 import { fetchSession } from './api'
 
 /**
@@ -27,6 +27,7 @@ export const sessionQueryOptions = () =>
   })
 
 export function useSession() {
+  useSessionToken()
   const query = useQuery(sessionQueryOptions())
   return {
     user: query.data?.user ?? null,

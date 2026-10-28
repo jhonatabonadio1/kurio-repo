@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from 'react'
+
 /**
  * Where the session token lives in the browser.
  *
@@ -74,4 +76,9 @@ if (typeof window !== 'undefined') {
     if (next && next.token !== current?.token) sessionStore.signIn(next)
     if (!next && current) sessionStore.signOut('logout')
   })
+}
+
+/** Re-renders the caller when the user signs in or out (any tab). */
+export function useSessionToken(): string | null {
+  return useSyncExternalStore(sessionStore.subscribe, sessionStore.token, () => null)
 }

@@ -2,6 +2,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
+import { mergeGuestCart } from '@/features/cart/api'
+import { rotateCartToken } from '@/shared/auth/cart-token'
 import { sessionStore } from '@/shared/auth/session-store'
 import { toast } from '@/shared/ui/toaster'
 
@@ -10,6 +12,8 @@ import { toast } from '@/shared/ui/toaster'
  * - private data of the previous user (every ['me', ...] query, the session)
  *   is removed from the cache on logout, expiry and user switch;
  * - on expiry, the user goes to login and comes back to the same page.
+ * - after login, the guest cart moves into the user's cart; after logout a
+ *   new guest cart starts (the previous one belonged to the user).
  * (Socket teardown hooks in here when real time lands.)
  */
 export function SessionSync() {
@@ -23,6 +27,24 @@ export function SessionSync() {
         if (change.type === 'signed-out' || switchedUser) {
           queryClient.removeQueries({ queryKey: ['me'] })
           queryClient.removeQueries({ queryKey: ['session'] })
+        }
+        if (change.type === 'signed-in') {
+          void mergeGuestCart()
+            .then(({ cart, adjustments }) => {
+              queryClient.setQueryData(['me', change.session.userId, 'cart'], cart)
+              for (const a of adjustments) {
+                toast(`${a.nftName}: mantivemos ${a.kept} de ${a.requested} no carrinho (limite de estoque).`, 'info')
+              }
+            })
+            .catch(() => undefined)
+            .finally(() => {
+              queryClient.removeQueries({ queryKey: ['cart', 'guest'] })
+              rotateCartToken()
+            })
+        }
+        if (change.type === 'signed-out') {
+          queryClient.removeQueries({ queryKey: ['cart', 'guest'] })
+          rotateCartToken()
         }
         if (change.type === 'signed-out' && change.reason === 'expired') {
           const { pathname, href } = router.state.location
