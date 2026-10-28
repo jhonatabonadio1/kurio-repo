@@ -1,5 +1,5 @@
 import { Link, useRouterState } from '@tanstack/react-router'
-import { LogIn, LogOut, Search, ShoppingCart } from 'lucide-react'
+import { Heart, LogIn, LogOut, Search, ShoppingCart } from 'lucide-react'
 
 import { useSession } from '@/features/auth/session'
 import { useLogout } from '@/features/auth/use-logout'
@@ -24,6 +24,8 @@ export function SiteHeader() {
   const logout = useLogout()
   const cartCount = useCart().data?.itemCount ?? 0
   const isMarket = MARKET_PATHS.some((p) => pathname.startsWith(p))
+  // Pages like /favorites or /login belong to neither item.
+  const isHome = pathname === '/'
   const navItem = 'relative flex h-[45px] items-start text-base text-foreground transition-colors hover:text-text-accent'
   const active = 'font-bold text-text-accent after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-full after:bg-primary'
 
@@ -35,7 +37,7 @@ export function SiteHeader() {
         </Link>
 
         <nav aria-label="Principal" className="hidden gap-10 lg:flex">
-          <Link to="/" className={cn(navItem, !isMarket && active)} aria-current={!isMarket ? 'page' : undefined}>
+          <Link to="/" className={cn(navItem, isHome && active)} aria-current={isHome ? 'page' : undefined}>
             Início
           </Link>
           <Link to="/" hash="catalogo" className={cn(navItem, isMarket && active)} aria-current={isMarket ? 'page' : undefined}>
@@ -57,6 +59,16 @@ export function SiteHeader() {
               </button>
             }
           />
+          {user && (
+            <Link
+              to="/favorites"
+              className={cn('rounded-md p-1 transition-colors hover:text-text-accent', pathname === '/favorites' && 'text-text-accent')}
+              aria-label="Meus favoritos"
+              aria-current={pathname === '/favorites' ? 'page' : undefined}
+            >
+              <Heart className="size-6" />
+            </Link>
+          )}
           <Link
             to="/cart"
             className="relative rounded-md p-1 transition-colors hover:text-text-accent"

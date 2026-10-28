@@ -19,6 +19,7 @@ export const SCENARIOS = {
   'order-timeout': 'Pedido é criado, mas a resposta não chega (idempotência)',
   'payment-confirmed': 'Pagamento confirmado após alguns segundos',
   'payment-rejected': 'Pagamento recusado após alguns segundos',
+  'favorite-error': 'Favoritar falha com 500 (desfaz a atualização otimista)',
 } as const
 export type Scenario = keyof typeof SCENARIOS
 export const isScenario = (value: unknown): value is Scenario =>

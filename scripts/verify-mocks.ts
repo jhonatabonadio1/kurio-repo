@@ -362,6 +362,28 @@ async function main() {
   check('wallets: deleting the primary promotes the other', removed.status === 200 && removed.body.wallets.length === 1 && removed.body.wallets[0].slot === 'primary')
   check('wallets: alice still has her 2 wallets', db.read((s) => s.wallets.filter((w) => w.userId === 'usr_alice').length) === 2)
 
+  // Favorites (same new account as the wallet checks)
+  check('favorites: no token -> 401', (await fetch(`${BASE}/favorites`)).status === 401)
+  check('favorites: new account has none', (await wapi('GET', '/favorites')).body.nftIds?.length === 0)
+  const fav1 = await wapi('PUT', '/favorites/emerald-ape-042')
+  const fav1again = await wapi('PUT', '/favorites/emerald-ape-042')
+  check('favorites: add is idempotent', fav1.status === 200 && fav1again.body.nftIds.length === 1)
+  await wapi('PUT', '/favorites/golden-signal-160')
+  const favItems = await wapi('GET', '/favorites/items')
+  check(
+    'favorites: items newest first, as summaries',
+    favItems.body.items.map((n: any) => n.id).join(',') === 'golden-signal-160,emerald-ape-042' && !('editions' in favItems.body.items[0]),
+  )
+  check('favorites: unknown NFT -> 404', (await wapi('PUT', '/favorites/nao-existe')).status === 404)
+  const favRemoved = await wapi('DELETE', '/favorites/emerald-ape-042')
+  const favRemovedAgain = await wapi('DELETE', '/favorites/emerald-ape-042')
+  check('favorites: remove is idempotent', favRemoved.body.nftIds.join() === 'golden-signal-160' && favRemovedAgain.status === 200)
+  check('favorites: alice keeps her own list', db.read((s) => s.favorites.usr_alice?.join()) === 'neon-vessel-552')
+  setMockConfig({ scenario: 'favorite-error', latencyMs: 0 })
+  const favFail = await wapi('PUT', '/favorites/emerald-ape-042')
+  check('scenario favorite-error: 500 and nothing saved', favFail.status === 500 && (await wapi('GET', '/favorites')).body.nftIds.join() === 'golden-signal-160')
+  setMockConfig({ scenario: 'default', latencyMs: 0 })
+
   // Reset
   setMockConfig({ scenario: 'default', latencyMs: 0 })
   db.write((s) => {

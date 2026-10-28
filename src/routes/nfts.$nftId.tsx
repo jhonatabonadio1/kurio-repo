@@ -5,8 +5,9 @@ import { ArrowLeft } from 'lucide-react'
 import { ApiError } from '@/contracts/api-error'
 import { nftDetailQueryOptions } from '@/features/catalog/queries'
 import { useAddToCart } from '@/features/cart/mutations'
+import { useFavorite } from '@/features/favorites/use-favorite'
 import { EditionPicker } from '@/features/nft-detail/components/edition-picker'
-import { HeartIconButton, NftGallery } from '@/features/nft-detail/components/nft-gallery'
+import { NftGallery } from '@/features/nft-detail/components/nft-gallery'
 import { NftInfoTabs } from '@/features/nft-detail/components/nft-info-tabs'
 import { MobileBuyBar, PurchaseActions, type PurchaseActionsProps } from '@/features/nft-detail/components/purchase-actions'
 import { RatingStars } from '@/features/nft-detail/components/rating-stars'
@@ -16,6 +17,7 @@ import { editionSlug, NftDetailSearchSchema, quantityLimit, resolveEdition } fro
 import { useDocumentTitle } from '@/shared/lib/use-document-title'
 import { formatEth } from '@/shared/money/eth'
 import { Button } from '@/shared/ui/button'
+import { HeartIconButton } from '@/shared/ui/heart-icon-button'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { toast } from '@/shared/ui/toaster'
 
@@ -59,6 +61,7 @@ function NftDetailPage() {
   const clamped = !unavailable && requested > limit
 
   const addToCart = useAddToCart()
+  const fav = useFavorite(nft.id, nft.name)
   const add = (then: 'cart' | 'stay') =>
     addToCart.mutate(
       { nftId: nft.id, editionId: edition.id, quantity },
@@ -80,12 +83,11 @@ function NftDetailPage() {
     onQuantityChange: (qtd) => setSearch({ qtd: qtd === 1 ? undefined : qtd }),
     unitPrice: edition.price,
     unavailable,
-    favorite: false,
+    favorite: fav.favorite,
     onBuy: () => add('cart'),
     onAddToCart: () => add('stay'),
     busy: addToCart.isPending,
-    // Connected with the favorites feature.
-    onToggleFavorite: undefined,
+    onToggleFavorite: fav.toggle,
   }
 
   return (
@@ -119,13 +121,13 @@ function NftDetailPage() {
               >
                 <ArrowLeft className="size-5" aria-hidden />
               </button>
-              <HeartIconButton size={35} active={actions.favorite} onClick={actions.onToggleFavorite} disabled={!actions.onToggleFavorite} label="Favoritar" />
+              <HeartIconButton size={35} active={fav.favorite} onClick={fav.toggle} label={fav.label} />
             </div>
             <NftGallery
               images={nft.gallery}
               favoriteSlot={
                 <span className="max-md:hidden">
-                  <HeartIconButton active={actions.favorite} onClick={actions.onToggleFavorite} disabled={!actions.onToggleFavorite} label="Favoritar" />
+                  <HeartIconButton active={fav.favorite} onClick={fav.toggle} label={fav.label} />
                 </span>
               }
             />

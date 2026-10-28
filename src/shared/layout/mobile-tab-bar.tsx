@@ -21,7 +21,12 @@ export function MobileTabBar() {
         <Link to="/" className={cn(item, pathname === '/' && current)} aria-label="Início" aria-current={pathname === '/' ? 'page' : undefined}>
           <House className="size-5" />
         </Link>
-        <Link to="/" hash="favoritos" className={item} aria-label="Favoritos">
+        <Link
+          to="/favorites"
+          className={cn(item, pathname === '/favorites' && current)}
+          aria-label="Favoritos"
+          aria-current={pathname === '/favorites' ? 'page' : undefined}
+        >
           <Heart className="size-5" />
         </Link>
         <OutOfScopeLink

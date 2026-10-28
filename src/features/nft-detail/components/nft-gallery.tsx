@@ -1,4 +1,3 @@
-import { Heart } from 'lucide-react'
 import * as React from 'react'
 
 import type { NftImage } from '@/contracts/catalog'
@@ -38,34 +37,5 @@ export function NftGallery({ images, favoriteSlot }: { images: NftImage[]; favor
         {favoriteSlot && <div className="absolute top-3.5 right-3.5">{favoriteSlot}</div>}
       </div>
     </div>
-  )
-}
-
-/** Small round heart used on the gallery and on the mobile hero. */
-export function HeartIconButton({
-  active,
-  disabled,
-  onClick,
-  size = 30,
-  label,
-}: {
-  active: boolean
-  disabled?: boolean
-  onClick?: () => void
-  size?: 30 | 35
-  label: string
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-pressed={active}
-      aria-label={label}
-      className="grid place-items-center rounded-full bg-foreground text-ink shadow-md transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none"
-      style={{ width: size, height: size }}
-    >
-      <Heart className={cn('size-4', active && 'fill-primary text-primary')} aria-hidden />
-    </button>
   )
 }

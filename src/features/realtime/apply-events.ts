@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query'
 
 import type { Cart } from '@/contracts/cart'
 import type { NftDetail, NftListResponse, NftSummary } from '@/contracts/catalog'
+import type { FavoriteItems } from '@/contracts/favorites'
 import { isTerminalStatus, type Order } from '@/contracts/order'
 import { NftUpdatedEventSchema, OrderUpdatedEventSchema, type NftUpdatedEvent } from '@/contracts/realtime'
 import { catalogKeys } from '@/features/catalog/queries'
@@ -60,6 +61,11 @@ export function applyNftUpdated(queryClient: QueryClient, raw: unknown) {
   })
   queryClient.setQueriesData<NftListResponse>({ queryKey: catalogKeys.all }, (old) =>
     old && 'items' in old ? { ...old, items: old.items.map((item) => patchSummary(item, event)) } : old,
+  )
+  // "Meus favoritos" holds summaries too: ['me', userId, 'favorites', 'items'].
+  queryClient.setQueriesData<FavoriteItems>(
+    { predicate: (q) => q.queryKey[0] === 'me' && q.queryKey[2] === 'favorites' && q.queryKey[3] === 'items' },
+    (old) => (old ? { items: old.items.map((item) => patchSummary(item, event)) } : old),
   )
 
   // Items of this NFT in the cart: tell the user and price everything again.

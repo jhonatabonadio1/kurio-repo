@@ -9,7 +9,7 @@ import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import { NftCard, NftCardSkeleton } from './nft-card'
 
-const GRID = cn(
+export const NFT_GRID_CLASS = cn(
   'grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 md:gap-x-6 md:gap-y-12 lg:gap-x-[34px] lg:gap-y-[72px]',
   // Mobile Figma: staggered columns (right column starts 32px lower).
   'max-md:[&>*:nth-child(even)]:translate-y-8 max-md:pb-8',
@@ -25,7 +25,7 @@ type Props = {
 export function NftGrid({ query, onClearFilters, hasFilters }: Props) {
   if (query.isPending) {
     return (
-      <div className={GRID} aria-busy="true" aria-label="Carregando NFTs">
+      <div className={NFT_GRID_CLASS} aria-busy="true" aria-label="Carregando NFTs">
         {Array.from({ length: CATALOG_PAGE_SIZE }, (_, i) => (
           <NftCardSkeleton key={i} />
         ))}
@@ -81,7 +81,7 @@ export function NftGrid({ query, onClearFilters, hasFilters }: Props) {
         </p>
       )}
       <div
-        className={cn(GRID, 'transition-opacity motion-reduce:transition-none', refreshing && 'opacity-60')}
+        className={cn(NFT_GRID_CLASS, 'transition-opacity motion-reduce:transition-none', refreshing && 'opacity-60')}
         aria-busy={query.isFetching}
       >
         {data.items.map((nft, index) => (

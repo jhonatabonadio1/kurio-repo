@@ -38,13 +38,14 @@ export function PurchaseActions(props: PurchaseActionsProps) {
         </Button>
         <Button
           variant="outline"
-          className="w-[130px] text-sm font-medium"
+          className={cn('w-[130px] text-sm font-medium', favorite && 'bg-primary/15')}
           onClick={onToggleFavorite}
           disabled={!onToggleFavorite}
+          // The name stays "Favoritar"; aria-pressed and the filled heart carry the state.
           aria-pressed={favorite}
         >
           <Heart className={cn('size-5', favorite && 'fill-current')} aria-hidden />
-          {favorite ? 'Favorito' : 'Favoritar'}
+          Favoritar
         </Button>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import type * as React from 'react'
 
 import type { NftSummary } from '@/contracts/catalog'
 import { formatEth } from '@/shared/money/eth'
@@ -8,7 +9,7 @@ import { Skeleton } from '@/shared/ui/skeleton'
 export const CARD_IMAGE_SIZES = '(min-width: 1024px) 250px, (min-width: 768px) 30vw, 45vw'
 
 /** Catalog card (Figma "Frame 141"): artwork on a card-coloured block, name, price. */
-export function NftCard({ nft, priority = false }: { nft: NftSummary; priority?: boolean }) {
+export function NftCard({ nft, priority = false, action }: { nft: NftSummary; priority?: boolean; action?: React.ReactNode }) {
   return (
     <article className="group relative flex flex-col gap-3">
       <div className="relative grid aspect-[258/300] place-items-center overflow-hidden bg-card">
@@ -23,6 +24,8 @@ export function NftCard({ nft, priority = false }: { nft: NftSummary; priority?:
             ESGOTADO
           </span>
         )}
+        {/* Above the card-wide link overlay, so it stays clickable. */}
+        {action && <div className="absolute top-3 right-3 z-10">{action}</div>}
       </div>
       <h3 className="text-sm leading-4 md:text-base">
         {/* The link covers the whole card (after:inset-0) but reads as the name. */}
