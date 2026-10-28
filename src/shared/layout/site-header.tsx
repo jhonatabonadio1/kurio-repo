@@ -3,6 +3,7 @@ import { LogIn, LogOut, Search, ShoppingCart } from 'lucide-react'
 
 import { useSession } from '@/features/auth/session'
 import { useLogout } from '@/features/auth/use-logout'
+import { useCart } from '@/features/cart/queries'
 
 import { cn } from '@/shared/lib/utils'
 import { buttonVariants } from '@/shared/ui/button'
@@ -16,11 +17,12 @@ const MARKET_PATHS = ['/nfts', '/cart', '/checkout', '/orders']
  * active item, search, cart with badge, sign-in. Hidden below md, where the
  * mobile tab bar takes over.
  */
-export function SiteHeader({ cartCount = 0 }: { cartCount?: number }) {
+export function SiteHeader() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const href = useRouterState({ select: (s) => s.location.href })
   const { user } = useSession()
   const logout = useLogout()
+  const cartCount = useCart().data?.itemCount ?? 0
   const isMarket = MARKET_PATHS.some((p) => pathname.startsWith(p))
   const navItem = 'relative flex h-[45px] items-start text-base text-foreground transition-colors hover:text-text-accent'
   const active = 'font-bold text-text-accent after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-full after:bg-primary'
@@ -56,8 +58,7 @@ export function SiteHeader({ cartCount = 0 }: { cartCount?: number }) {
             }
           />
           <Link
-            to="/"
-            hash="carrinho"
+            to="/cart"
             className="relative rounded-md p-1 transition-colors hover:text-text-accent"
             aria-label={cartCount ? `Carrinho, ${cartCount} itens` : 'Carrinho'}
           >

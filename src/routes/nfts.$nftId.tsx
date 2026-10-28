@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 
 import { ApiError } from '@/contracts/api-error'
 import { nftDetailQueryOptions } from '@/features/catalog/queries'
+import { useAddToCart } from '@/features/cart/mutations'
 import { EditionPicker } from '@/features/nft-detail/components/edition-picker'
 import { HeartIconButton, NftGallery } from '@/features/nft-detail/components/nft-gallery'
 import { NftInfoTabs } from '@/features/nft-detail/components/nft-info-tabs'
@@ -16,6 +17,7 @@ import { useDocumentTitle } from '@/shared/lib/use-document-title'
 import { formatEth } from '@/shared/money/eth'
 import { Button } from '@/shared/ui/button'
 import { Skeleton } from '@/shared/ui/skeleton'
+import { toast } from '@/shared/ui/toaster'
 
 export const Route = createFileRoute('/nfts/$nftId')({
   validateSearch: NftDetailSearchSchema,
@@ -56,6 +58,18 @@ function NftDetailPage() {
   const quantity = unavailable ? 1 : Math.min(requested, limit)
   const clamped = !unavailable && requested > limit
 
+  const addToCart = useAddToCart()
+  const add = (then: 'cart' | 'stay') =>
+    addToCart.mutate(
+      { nftId: nft.id, editionId: edition.id, quantity },
+      {
+        onSuccess: () => {
+          toast(`${nft.name} (${quantity}×) adicionado ao carrinho.`, 'success')
+          if (then === 'cart') void navigate({ to: '/cart' })
+        },
+      },
+    )
+
   const setSearch = (patch: { edicao?: string; qtd?: number }) =>
     void navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true, resetScroll: false })
 
@@ -67,9 +81,10 @@ function NftDetailPage() {
     unitPrice: edition.price,
     unavailable,
     favorite: false,
-    // Connected in the next steps (cart, favorites with auth).
-    onBuy: undefined,
-    onAddToCart: undefined,
+    onBuy: () => add('cart'),
+    onAddToCart: () => add('stay'),
+    busy: addToCart.isPending,
+    // Connected with the favorites feature.
     onToggleFavorite: undefined,
   }
 
