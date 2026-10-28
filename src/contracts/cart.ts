@@ -35,6 +35,8 @@ export const CartSchema = z.object({
   items: z.array(CartItemSchema),
   itemCount: z.number().int().nonnegative(),
   subtotal: EthAmountSchema,
+  /** Coupon applied to this cart (validated again by every quote). */
+  couponCode: z.string().nullable(),
   /** Increases on every change; quotes are tied to one cart version. */
   version: z.number().int().nonnegative(),
 })
@@ -62,3 +64,8 @@ export const CartMergeResponseSchema = z.object({
   ),
 })
 export type CartMergeResponse = z.infer<typeof CartMergeResponseSchema>
+
+export const ApplyCouponInputSchema = z.object({
+  code: z.string().trim().toUpperCase().min(1, 'Digite um código promocional.').max(20),
+})
+export type ApplyCouponInput = z.infer<typeof ApplyCouponInputSchema>

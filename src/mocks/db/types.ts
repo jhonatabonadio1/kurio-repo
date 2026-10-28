@@ -24,7 +24,7 @@ export type CartLineRecord = {
 }
 
 /** Owner key: `user:<id>` or `guest:<cart token>`. */
-export type CartRecord = { ownerKey: string; lines: CartLineRecord[]; version: number }
+export type CartRecord = { ownerKey: string; lines: CartLineRecord[]; couponCode: string | null; version: number }
 
 export type QuoteRecord = Quote & {
   ownerKey: string

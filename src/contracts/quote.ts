@@ -3,8 +3,8 @@ import { z } from 'zod'
 import { ChainSchema, EditionKindSchema, ImageSchema } from './catalog'
 import { EthAmountSchema } from './money'
 
+/** The coupon comes from the cart; the network is chosen at checkout. */
 export const QuoteRequestSchema = z.object({
-  couponCode: z.string().trim().toUpperCase().max(20).optional(),
   network: ChainSchema,
 })
 export type QuoteRequest = z.infer<typeof QuoteRequestSchema>
@@ -46,3 +46,6 @@ export const QuoteSchema = z.object({
   changes: z.array(QuoteChangeSchema),
 })
 export type Quote = z.infer<typeof QuoteSchema>
+
+/** Estimated network fee per chain (mock values; Ethereum matches the Figma). */
+export const NETWORK_FEES = { ethereum: '0.016', polygon: '0.002', solana: '0.001' } as const

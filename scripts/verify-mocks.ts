@@ -116,6 +116,66 @@ async function main() {
   check('scenario register-conflict -> 409', conflict.status === 409)
   setMockConfig({ scenario: 'default' })
 
+  // Cart, coupon, quote, merge
+  const GUEST = 'guest-cart-token-0001'
+  const api = async (method: string, path: string, body?: unknown, headers: Record<string, string> = {}) => {
+    const res = await fetch(`${BASE}${path}`, {
+      method,
+      headers: { 'Content-Type': 'application/json', 'X-Cart-Token': GUEST, ...headers },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    })
+    return { status: res.status, body: (await res.json()) as Record<string, any> }
+  }
+  check('cart without token -> 400', (await fetch(`${BASE}/cart`)).status === 400)
+  const emptyCart = await api('GET', '/cart')
+  check('guest cart starts empty', emptyCart.status === 200 && emptyCart.body.itemCount === 0)
+
+  const ape = 'emerald-ape-042'
+  const ed = (kind: string) => `${ape}--${kind}`
+  const added = await api('POST', '/cart/items', { nftId: ape, editionId: ed('1-50'), quantity: 2 })
+  check('add 2 × 1/50 (1.78 each)', added.status === 200 && added.body.itemCount === 2 && added.body.subtotal === '3.56')
+  const over = await api('POST', '/cart/items', { nftId: ape, editionId: ed('1-50'), quantity: 9 })
+  check('add over maxPerOrder (10) -> 409 AVAILABILITY_CONFLICT', over.status === 409 && over.body.error.code === 'AVAILABILITY_CONFLICT')
+  const itemId = added.body.items[0].id as string
+  const updated = await api('PATCH', `/cart/items/${itemId}`, { quantity: 3 })
+  check('update quantity', updated.status === 200 && updated.body.items[0].quantity === 3 && updated.body.version > added.body.version)
+  await api('POST', '/cart/items', { nftId: ape, editionId: ed('aberta'), quantity: 1 })
+
+  const invalidCoupon = await api('PUT', '/cart/coupon', { code: 'NADA' })
+  check('coupon invalid -> 422 with field', invalidCoupon.status === 422 && invalidCoupon.body.error.fields.couponCode === 'Cupom inválido.')
+  const expired = await api('PUT', '/cart/coupon', { code: 'old20' })
+  check('coupon expired -> 422', expired.status === 422 && expired.body.error.fields.couponCode === 'Este cupom expirou.')
+  const applied = await api('PUT', '/cart/coupon', { code: 'welcome10' })
+  check('coupon WELCOME10 applied', applied.status === 200 && applied.body.couponCode === 'WELCOME10')
+
+  const quote = await api('POST', '/quotes', { network: 'ethereum' })
+  // 3 × 1.78 + 1 × 1.19 = 6.53; 10% = 0.653; fee 0.016 -> 5.893
+  check(
+    'quote: subtotal, discount, fee, total',
+    quote.status === 200 && quote.body.subtotal === '6.53' && quote.body.discount === '0.653' && quote.body.networkFee === '0.016' && quote.body.total === '5.893',
+    `${quote.body.subtotal} - ${quote.body.discount} + ${quote.body.networkFee} = ${quote.body.total}`,
+  )
+  const polygon = await api('POST', '/quotes', { network: 'polygon' })
+  check('quote: polygon fee 0.002', polygon.body.networkFee === '0.002')
+  await api('DELETE', '/cart/coupon')
+
+  // Merge into Bruno's cart, which already holds 8 of the same edition (limit 10).
+  const bruno = (await post('/auth/login', { email: 'bruno@test.dev', password: 'Test@1234' })).body.token as string
+  const asBruno = { Authorization: `Bearer ${bruno}` }
+  await api('POST', '/cart/items', { nftId: ape, editionId: ed('1-50'), quantity: 8 }, asBruno)
+  const merge = await api('POST', '/cart/merge', undefined, asBruno)
+  const line = merge.body.cart.items.find((i: any) => i.editionId === ed('1-50'))
+  check(
+    'merge keeps guest items within limits and reports adjustments',
+    merge.status === 200 && line.quantity === 10 && merge.body.adjustments[0]?.kept === 10 && merge.body.adjustments[0]?.requested === 11,
+  )
+  check('guest cart is gone after merge', (await api('GET', '/cart')).body.itemCount === 0)
+  const brunoCart = await api('GET', '/cart', undefined, asBruno)
+  check('user cart wins over guest token when signed in', brunoCart.body.itemCount === 11)
+  for (const item of brunoCart.body.items) await api('DELETE', `/cart/items/${item.id}`, undefined, asBruno)
+  check('remove items', (await api('GET', '/cart', undefined, asBruno)).body.itemCount === 0)
+  check('quote of an empty cart -> 409 CART_EMPTY', (await api('POST', '/quotes', { network: 'ethereum' }, asBruno)).status === 409)
+
   // Scenarios
   setMockConfig({ scenario: 'empty' })
   const empty = NftListResponseSchema.parse((await list()).body)
