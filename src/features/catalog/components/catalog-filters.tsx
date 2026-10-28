@@ -99,8 +99,12 @@ function FilterOption({
         )}
       >
         {/* The check mark keeps the state readable without relying on colour. */}
-        <span className="flex items-center gap-1.5">
-          <Check className={cn('size-3.5 transition-opacity', checked ? 'opacity-100' : 'opacity-0')} aria-hidden />
+        <span className="relative">
+          {/* Sits in the left padding, so labels line up with the Figma. */}
+          <Check
+            className={cn('absolute top-1/2 -left-3 size-3 -translate-y-1/2 transition-opacity', checked ? 'opacity-100' : 'opacity-0')}
+            aria-hidden
+          />
           {label}
         </span>
         {count === undefined ? (

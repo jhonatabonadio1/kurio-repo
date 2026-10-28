@@ -60,7 +60,7 @@ export function CatalogToolbar({ search, update, activeFilterCount, onOpenFilter
               </span>
             )}
           </button>
-          <label className="flex items-center text-[15px] whitespace-nowrap">
+          <label className="flex items-center gap-2 text-[15px] whitespace-nowrap">
             <span className="max-sm:sr-only">Ordenar por:</span>
             <span className="relative">
               <select
