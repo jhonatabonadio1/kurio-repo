@@ -4,6 +4,8 @@ import { env } from '@/env'
 import { applyConfigFromUrl } from './config'
 import { db } from './db/store'
 import { restHandlers } from './handlers'
+import { resumePendingOrders } from './lib/orders'
+import { attachRealtimeServer } from './realtime'
 import { createMockSocketServer } from './socket/socket-handler'
 
 export const mockSocketServer = createMockSocketServer({
@@ -14,6 +16,8 @@ export const mockSocketServer = createMockSocketServer({
       return session && Date.parse(session.expiresAt) > Date.now() ? session.userId : null
     }),
 })
+
+attachRealtimeServer(mockSocketServer)
 
 // A reset drops every socket; clients reconnect and reconcile with REST.
 db.onReset(() => mockSocketServer.disconnectAll())
@@ -27,4 +31,6 @@ export async function startMockWorker() {
     onUnhandledRequest: 'bypass',
     serviceWorker: { url: `${import.meta.env.BASE_URL}mockServiceWorker.js` },
   })
+  // Orders left pending before a refresh settle now (or when due).
+  resumePendingOrders()
 }

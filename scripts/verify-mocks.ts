@@ -11,6 +11,7 @@ import { NftListResponseSchema } from '@/contracts/catalog'
 import { setMockConfig } from '@/mocks/config'
 import { db } from '@/mocks/db/store'
 import { restHandlers } from '@/mocks/handlers'
+import { recentEvents } from '@/mocks/realtime'
 
 const BASE = 'http://localhost:5173/api'
 const server = setupServer(...restHandlers)
@@ -175,6 +176,76 @@ async function main() {
   for (const item of brunoCart.body.items) await api('DELETE', `/cart/items/${item.id}`, undefined, asBruno)
   check('remove items', (await api('GET', '/cart', undefined, asBruno)).body.itemCount === 0)
   check('quote of an empty cart -> 409 CART_EMPTY', (await api('POST', '/quotes', { network: 'ethereum' }, asBruno)).status === 409)
+
+  // Orders: idempotency, settlement, stale quotes, scenarios
+  const alice = (await post('/auth/login', { email: 'alice@test.dev', password: 'Test@1234' })).body.token as string
+  const asAlice = { Authorization: `Bearer ${alice}` }
+  const buyer = { fullName: 'Alice Martins', email: 'alice@test.dev' }
+  const order = (key: string | null, body: unknown, extra: Record<string, string> = {}, signal?: AbortSignal) =>
+    fetch(`${BASE}/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...asAlice, ...(key ? { 'Idempotency-Key': key } : {}), ...extra },
+      body: JSON.stringify(body),
+      signal,
+    }).then(async (r) => ({ status: r.status, body: (await r.json()) as Record<string, any> }))
+  const stockOf = (editionId: string) => db.read((s) => s.nfts.flatMap((n) => n.editions).find((e) => e.id === editionId)!.available)
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+  const before = stockOf(ed('1-50'))
+  await api('POST', '/cart/items', { nftId: ape, editionId: ed('1-50'), quantity: 2 }, asAlice)
+  const q1 = (await api('POST', '/quotes', { network: 'ethereum' }, asAlice)).body
+  const body1 = { quoteId: q1.id, walletId: 'wal_alice_primary', network: 'ethereum', buyer }
+  check('order without Idempotency-Key -> 400', (await order(null, body1)).status === 400)
+  const created1 = await order('key-alice-0001', body1)
+  check('order created as pending (201)', created1.status === 201 && created1.body.status === 'pending')
+  const replay = await order('key-alice-0001', body1)
+  check('same key + same body -> same order (200)', replay.status === 200 && replay.body.id === created1.body.id)
+  const reused = await order('key-alice-0001', { ...body1, network: 'polygon' })
+  check('same key + other body -> 409 IDEMPOTENCY_KEY_REUSED', reused.status === 409 && reused.body.error.code === 'IDEMPOTENCY_KEY_REUSED')
+  const brunoView = await fetch(`${BASE}/orders/${created1.body.id}`, { headers: asBruno })
+  check("another user's order -> 403", brunoView.status === 403)
+
+  await sleep(3_300)
+  const settled = (await api('GET', `/orders/${created1.body.id}`, undefined, asAlice)).body
+  check('settles to confirmed with a tx hash', settled.status === 'confirmed' && /^0x[0-9a-f]{64}$/.test(settled.txHash ?? ''))
+  check('stock went down by 2', stockOf(ed('1-50')) === before - 2, `${before} -> ${stockOf(ed('1-50'))}`)
+  check('bought items left the cart', (await api('GET', '/cart', undefined, asAlice)).body.itemCount === 0)
+  check('receipt is the quote snapshot', settled.receipt.total === q1.total && settled.receipt.lines.length === 1)
+  const sent = recentEvents.map((e) => e.event.type)
+  check('published nft.updated and order.updated', sent.includes('nft.updated') && sent.includes('order.updated'))
+
+  // Stale quote: the cart changed after quoting.
+  await api('POST', '/cart/items', { nftId: ape, editionId: ed('aberta'), quantity: 1 }, asAlice)
+  const q2 = (await api('POST', '/quotes', { network: 'ethereum' }, asAlice)).body
+  await api('POST', '/cart/items', { nftId: ape, editionId: ed('aberta'), quantity: 1 }, asAlice)
+  const stale = await order('key-alice-0002', { ...body1, quoteId: q2.id })
+  check('cart changed after the quote -> 409 QUOTE_STALE', stale.status === 409 && stale.body.error.code === 'QUOTE_STALE')
+
+  setMockConfig({ scenario: 'payment-rejected' })
+  const q3 = (await api('POST', '/quotes', { network: 'ethereum' }, asAlice)).body
+  const rejected = await order('key-alice-0003', { ...body1, quoteId: q3.id })
+  await sleep(3_300)
+  const rejectedNow = (await api('GET', `/orders/${rejected.body.id}`, undefined, asAlice)).body
+  check('scenario payment-rejected: rejected, cart kept', rejectedNow.status === 'rejected' && (await api('GET', '/cart', undefined, asAlice)).body.itemCount === 2)
+
+  setMockConfig({ scenario: 'order-timeout' })
+  const q4 = (await api('POST', '/quotes', { network: 'ethereum' }, asAlice)).body
+  const body4 = { ...body1, quoteId: q4.id }
+  const timedOut = await order('key-alice-0004', body4, {}, AbortSignal.timeout(500)).then(() => 'answered', () => 'timeout')
+  const retried = await order('key-alice-0004', body4)
+  const pendingList = (await api('GET', '/orders?status=pending', undefined, asAlice)).body.orders as any[]
+  check(
+    'scenario order-timeout: retry with the same key returns the same order',
+    timedOut === 'timeout' && retried.status === 200 && pendingList.filter((o) => o.id === retried.body.id).length === 1,
+  )
+
+  setMockConfig({ scenario: 'sold-out' })
+  await sleep(3_300) // let the previous order settle first (it empties the cart)
+  await api('POST', '/cart/items', { nftId: ape, editionId: ed('1-50'), quantity: 1 }, asAlice)
+  const q5 = (await api('POST', '/quotes', { network: 'ethereum' }, asAlice)).body
+  const soldOut = await order('key-alice-0005', { ...body1, quoteId: q5.id })
+  check('scenario sold-out -> 409 AVAILABILITY_CONFLICT', soldOut.status === 409 && soldOut.body.error.code === 'AVAILABILITY_CONFLICT', soldOut.body.error?.code)
+  setMockConfig({ scenario: 'default' })
 
   // Scenarios
   setMockConfig({ scenario: 'empty' })
