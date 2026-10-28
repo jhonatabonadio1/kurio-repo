@@ -18,12 +18,15 @@ import { WalletPicker } from '@/features/checkout/components/wallet-picker'
 import { checkoutDraft } from '@/features/checkout/draft'
 import { newIdempotencyKey, usePlaceOrder } from '@/features/checkout/use-place-order'
 import { useWalletConnection } from '@/features/checkout/use-wallet-connection'
-import { pendingOrdersQueryOptions, walletsQueryOptions } from '@/features/orders/queries'
+import { pendingOrdersQueryOptions } from '@/features/orders/queries'
+import { WalletFormDialog } from '@/features/wallets/components/wallet-form-dialog'
+import { walletsQueryOptions } from '@/features/wallets/queries'
 import { useDocumentTitle } from '@/shared/lib/use-document-title'
 import { formatEth } from '@/shared/money/eth'
 import { Button } from '@/shared/ui/button'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { TextField } from '@/shared/ui/text-field'
+import { toast } from '@/shared/ui/toaster'
 
 export const Route = createFileRoute('/checkout')({
   beforeLoad: requireAuth,
@@ -61,6 +64,8 @@ function CheckoutPage() {
   const connection = useWalletConnection([walletId, network, provider])
   const [reviewed, setReviewed] = React.useState<Reviewed | null>(null)
   const [submitError, setSubmitError] = React.useState<{ message: string; toCart: boolean } | null>(null)
+  const [walletDialogOpen, setWalletDialogOpen] = React.useState(false)
+  const [walletError, setWalletError] = React.useState<string | undefined>()
 
   const form = useForm<Buyer>({
     resolver: zodResolver(BuyerSchema),
@@ -86,7 +91,7 @@ function CheckoutPage() {
   const connected = connection.state.status === 'connected'
   const canConfirm = Boolean(reviewed && quote.data && !quoteChanged && !quote.isFetching && connected && walletId && !placeOrder.isPending)
 
-  const review = form.handleSubmit(async () => {
+  const reviewValid = form.handleSubmit(async () => {
     setSubmitError(null)
     if (!walletId) return
     // Always price again right before showing the review.
@@ -98,6 +103,18 @@ function CheckoutPage() {
     setReviewed({ quoteId: fresh.id, total: fresh.total })
     requestAnimationFrame(() => document.getElementById('review-title')?.focus())
   })
+
+  const review = (event: React.FormEvent) => {
+    // No wallet yet (new accounts): say so instead of doing nothing.
+    if (!walletId) {
+      event.preventDefault()
+      setWalletError('Cadastre uma carteira para receber os NFTs.')
+      void form.trigger()
+      requestAnimationFrame(() => document.getElementById('wallet-add')?.focus())
+      return
+    }
+    void reviewValid(event)
+  }
 
   const confirm = () => {
     if (!quote.data || !walletId) return
@@ -202,7 +219,7 @@ function CheckoutPage() {
       )}
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
-        <form noValidate onSubmit={(e) => void review(e)} className="flex flex-col gap-6" id="checkout-form">
+        <form noValidate onSubmit={review} className="flex flex-col gap-6" id="checkout-form">
           <CheckoutSection step={1} title="Dados do colecionador" id="buyer-title">
             <div className="grid gap-4 sm:grid-cols-2">
               <TextField label="Nome completo" autoComplete="name" error={form.formState.errors.fullName?.message} {...form.register('fullName')} />
@@ -219,6 +236,8 @@ function CheckoutPage() {
                 setNetwork(wallet.network)
                 setProvider(wallet.walletType)
               }}
+              onAdd={() => setWalletDialogOpen(true)}
+              error={walletId ? undefined : walletError}
             />
           </CheckoutSection>
 
@@ -280,6 +299,21 @@ function CheckoutPage() {
           )}
         </aside>
       </div>
+
+      {/* Outside the checkout <form>: React submit events bubble through portals. */}
+      <WalletFormDialog
+        open={walletDialogOpen}
+        onOpenChange={setWalletDialogOpen}
+        user={user}
+        defaults={{ network, walletType: provider }}
+        onSaved={(saved) => {
+          setWalletError(undefined)
+          setWalletId(saved.id)
+          setNetwork(saved.network)
+          setProvider(saved.walletType)
+          toast(`Carteira "${saved.displayName}" cadastrada.`, 'success')
+        }}
+      />
     </div>
   )
 }

@@ -1,5 +1,4 @@
 import { OrderListSchema, OrderSchema, type CreateOrderInput } from '@/contracts/order'
-import { WalletListSchema } from '@/contracts/wallet'
 import { getParsed, http } from '@/shared/api/client'
 
 /** Order creation waits less than other calls, so a lost answer is retried sooner. */
@@ -15,5 +14,3 @@ export const fetchOrder = (id: string, signal?: AbortSignal) =>
 
 export const fetchPendingOrders = (signal?: AbortSignal) =>
   getParsed('/orders', OrderListSchema, { params: { status: 'pending' }, signal })
-
-export const fetchWallets = (signal?: AbortSignal) => getParsed('/wallets', WalletListSchema, { signal })

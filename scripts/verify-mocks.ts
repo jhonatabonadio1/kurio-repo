@@ -308,6 +308,60 @@ async function main() {
   await list()
   check('scenario slow ~2.5 s', Date.now() - t0 >= 2_400, `${Date.now() - t0} ms`)
 
+  // Wallets (new account starts with none)
+  setMockConfig({ scenario: 'default', latencyMs: 0 })
+  const walletUser = await post('/auth/register', { username: 'wallet.tester', email: 'wallet@test.dev', password: 'Senha1234', confirmPassword: 'Senha1234' })
+  const wt = walletUser.body.token as string
+  const wapi = async (method: string, path: string, body?: unknown, token = wt) => {
+    const res = await fetch(`${BASE}${path}`, {
+      method,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    })
+    return { status: res.status, body: (await res.json()) as Record<string, any> }
+  }
+  const walletInput = (address: string, name = 'Principal') => ({
+    displayName: name,
+    alias: name,
+    network: 'polygon',
+    profileName: 'Wallet Tester',
+    address,
+    secondaryAddress: '',
+    walletType: 'metamask',
+    referralCode: '',
+    email: 'wallet@test.dev',
+    ensName: 'wallet-tester',
+  })
+  const ADDR_A = '0x' + 'a'.repeat(40)
+  const ADDR_B = '0x' + 'b'.repeat(40)
+  check('wallets: new account has none', (await wapi('GET', '/wallets')).body.wallets?.length === 0)
+  check('wallets: no token -> 401', (await fetch(`${BASE}/wallets`, { method: 'POST' })).status === 401)
+  const badWallet = await wapi('POST', '/wallets', { ...walletInput('0x123'), displayName: '' })
+  check('wallets: invalid -> 422 with fields', badWallet.status === 422 && Boolean(badWallet.body.error.fields.address) && Boolean(badWallet.body.error.fields.displayName))
+  const w1 = await wapi('POST', '/wallets', walletInput(ADDR_A))
+  check(
+    'wallets: first one is created as primary (201)',
+    w1.status === 201 && w1.body.wallet.slot === 'primary' && w1.body.wallet.referralCode === null && !('userId' in w1.body.wallet),
+  )
+  const dupWallet = await wapi('POST', '/wallets', walletInput(ADDR_A.toUpperCase().replace('0X', '0x'), 'Outra'))
+  check('wallets: same address -> 409 WALLET_DUPLICATE', dupWallet.status === 409 && dupWallet.body.error.code === 'WALLET_DUPLICATE' && Boolean(dupWallet.body.error.fields.address))
+  const w2 = await wapi('POST', '/wallets', walletInput(ADDR_B, 'Reserva'))
+  check('wallets: second one is secondary', w2.status === 201 && w2.body.wallet.slot === 'secondary' && w2.body.wallets.length === 2)
+  const w3 = await wapi('POST', '/wallets', walletInput('0x' + 'c'.repeat(40), 'Terceira'))
+  check('wallets: third -> 409 WALLET_LIMIT', w3.status === 409 && w3.body.error.code === 'WALLET_LIMIT')
+  const swapped = await wapi('POST', `/wallets/${w2.body.wallet.id}/primary`)
+  check(
+    'wallets: make primary swaps the slots',
+    swapped.status === 200 && swapped.body.wallets[0].id === w2.body.wallet.id && swapped.body.wallets[1].slot === 'secondary',
+  )
+  const edited = await wapi('PUT', `/wallets/${w1.body.wallet.id}`, walletInput(ADDR_A, 'Editada'))
+  check('wallets: update bumps version', edited.status === 200 && edited.body.wallet.displayName === 'Editada' && edited.body.wallet.version === swapped.body.wallets[1].version + 1)
+  check('wallets: another user\'s wallet -> 404 (no leak)', (await wapi('PUT', '/wallets/wal_alice_primary', walletInput(ADDR_A))).status === 404)
+  check('wallets: cannot delete another user\'s wallet', (await wapi('DELETE', '/wallets/wal_alice_primary')).status === 404)
+  const removed = await wapi('DELETE', `/wallets/${w2.body.wallet.id}`)
+  check('wallets: deleting the primary promotes the other', removed.status === 200 && removed.body.wallets.length === 1 && removed.body.wallets[0].slot === 'primary')
+  check('wallets: alice still has her 2 wallets', db.read((s) => s.wallets.filter((w) => w.userId === 'usr_alice').length) === 2)
+
   // Reset
   setMockConfig({ scenario: 'default', latencyMs: 0 })
   db.write((s) => {

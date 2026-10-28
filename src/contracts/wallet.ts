@@ -36,7 +36,9 @@ export const WalletInputSchema = z.object({
   referralCode: z
     .string()
     .trim()
-    .regex(/^[A-Z0-9]{4,12}$/, 'Use 4 a 12 letras maiúsculas ou números.'),
+    .regex(/^[A-Z0-9]{4,12}$/, 'Use 4 a 12 letras maiúsculas ou números.')
+    .or(z.literal(''))
+    .optional(),
   email: z.email('Informe um e-mail válido.'),
   ensName: z
     .string()
@@ -49,8 +51,20 @@ export const WalletSchema = WalletInputSchema.extend({
   id: z.string(),
   slot: WalletSlotSchema,
   secondaryAddress: z.string().nullable(),
+  referralCode: z.string().nullable(),
   version: z.number().int().nonnegative(),
 })
 export type Wallet = z.infer<typeof WalletSchema>
 
 export const WalletListSchema = z.object({ wallets: z.array(WalletSchema) })
+export type WalletList = z.infer<typeof WalletListSchema>
+
+/** A user keeps at most a primary and a secondary wallet (Figma "Carteiras"). */
+export const WALLET_LIMIT = 2
+
+/**
+ * Every wallet write answers with the whole list: making one wallet primary
+ * or deleting the primary also changes the other one.
+ */
+export const WalletMutationResponseSchema = WalletListSchema.extend({ wallet: WalletSchema.nullable() })
+export type WalletMutationResponse = z.infer<typeof WalletMutationResponseSchema>

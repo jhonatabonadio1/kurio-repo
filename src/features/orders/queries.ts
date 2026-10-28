@@ -2,7 +2,7 @@ import { queryOptions } from '@tanstack/react-query'
 
 import { isTerminalStatus, type Order } from '@/contracts/order'
 import { realtimeStatus } from '@/shared/realtime/status'
-import { fetchOrder, fetchPendingOrders, fetchWallets } from './api'
+import { fetchOrder, fetchPendingOrders } from './api'
 
 /** Private data: everything under ['me', userId] is dropped on logout/user switch. */
 export const orderKeys = {
@@ -28,11 +28,4 @@ export const pendingOrdersQueryOptions = (userId: string) =>
     queryKey: orderKeys.pending(userId),
     queryFn: ({ signal }) => fetchPendingOrders(signal),
     staleTime: 0,
-  })
-
-export const walletsQueryOptions = (userId: string) =>
-  queryOptions({
-    queryKey: ['me', userId, 'wallets'] as const,
-    queryFn: ({ signal }) => fetchWallets(signal),
-    staleTime: 5 * 60_000,
   })
