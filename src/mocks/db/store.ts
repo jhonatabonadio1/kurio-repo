@@ -11,7 +11,7 @@ import type { MockDbState } from './types'
  * it stays in memory.
  */
 const STORAGE_KEY = 'kurio-mock-db'
-const SCHEMA_VERSION = 1
+const SCHEMA_VERSION = 2
 
 export function createSeed(): MockDbState {
   return {

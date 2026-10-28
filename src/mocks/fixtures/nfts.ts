@@ -29,6 +29,8 @@ const image = (key: ArtworkKey): NftImage => ({ key, alt: ARTWORK_ALT[key] })
 
 type Seed = {
   name: string
+  /** Defaults to the collection of the artwork. */
+  collection?: string
   number: string
   price: string
   previousPrice?: string
@@ -103,13 +105,14 @@ function buildNft(seed: Seed, index: number, rnd: Random): NftDetail {
   const attributes = seed.attributes ?? rnd.shuffle(ATTRIBUTES).slice(0, 3)
   const creator = rnd.pick(CREATORS)
   const chainName = CHAIN_LABELS[seed.chain]
+  const collection = seed.collection ?? COLLECTION_BY_ART[seed.art]
   const editionText = kinds.includes('1/50') ? '1/50' : (kinds[0] ?? '1/1')
 
   return {
     id,
     name: `${seed.name} #${seed.number}`,
     tokenId: `#${seed.number.padStart(4, '0')}`,
-    collection: COLLECTION_BY_ART[seed.art],
+    collection,
     category: seed.category,
     chain: seed.chain,
     image: image(seed.art),
@@ -120,8 +123,8 @@ function buildNft(seed: Seed, index: number, rnd: Random): NftDetail {
     trending: seed.trending ?? false,
     listedAt: new Date(listedAt).toISOString(),
     version: 1,
-    about: `Um colecionável digital finalizado à mão da coleção ${COLLECTION_BY_ART[seed.art]}, verificado na ${chainName}, com arte desbloqueável e acesso para colecionadores.`,
-    description: `${seed.name} #${seed.number} é uma obra digital ${editionText} finalizada à mão da coleção ${COLLECTION_BY_ART[seed.art]}. Cada atributo fica armazenado nos metadados do token e verificado na ${chainName}. A obra explora identidade, movimento e luz em um mundo digital sem fronteiras. A propriedade inclui a arte em alta resolução, lançamentos exclusivos para colecionadores e um registro permanente de procedência na rede. ${creator} recebe 5% de direitos autorais nas vendas secundárias.`,
+    about: `Um colecionável digital finalizado à mão da coleção ${collection}, verificado na ${chainName}, com arte desbloqueável e acesso para colecionadores.`,
+    description: `${seed.name} #${seed.number} é uma obra digital ${editionText} finalizada à mão da coleção ${collection}. Cada atributo fica armazenado nos metadados do token e verificado na ${chainName}. A obra explora identidade, movimento e luz em um mundo digital sem fronteiras. A propriedade inclui a arte em alta resolução, lançamentos exclusivos para colecionadores e um registro permanente de procedência na rede. ${creator} recebe 5% de direitos autorais nas vendas secundárias.`,
     attributes,
     creator: { name: creator, royaltyPercent: 5 },
     contract: `0x${rnd.hex(4)}...${rnd.hex(4)}`,
@@ -152,6 +155,8 @@ export function createNftFixtures(): NftDetail[] {
       price: eth.of(price === '0.00' ? '0.02' : price),
       previousPrice: rnd.chance(0.12) ? eth.of((Number(price) * 1.2).toFixed(2)) : undefined,
       art: rnd.pick(ARTWORKS),
+      // Independent of the artwork, so "Mais desta coleção" shows varied art.
+      collection: rnd.pick(Object.values(COLLECTION_BY_ART)),
       category: categories[n % categories.length] as Category,
       chain: rnd.next() < 0.5 ? 'ethereum' : rnd.next() < 0.5 ? 'polygon' : 'solana',
       kinds: ALL_KINDS.filter((k) => kinds.includes(k)),

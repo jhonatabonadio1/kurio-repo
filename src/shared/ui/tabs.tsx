@@ -14,7 +14,9 @@ function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimi
   return (
     <TabsPrimitive.List
       data-slot="tabs-list"
-      className={cn('flex gap-8 overflow-x-auto border-b border-border', className)}
+      // The rule is an inset shadow (not a border), so the active underline can
+      // sit on it without overflowing the scroll box.
+      className={cn('flex gap-8 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_var(--border)]', className)}
       {...props}
     />
   )
@@ -25,7 +27,7 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        '-mb-px shrink-0 border-b-2 border-transparent pb-3 text-base leading-4 font-bold whitespace-nowrap text-text-secondary transition-colors hover:text-foreground',
+        'shrink-0 border-b-2 border-transparent pb-3 text-base leading-4 font-bold whitespace-nowrap text-text-secondary transition-colors hover:text-foreground',
         'data-[state=active]:border-primary data-[state=active]:text-text-accent',
         className,
       )}
