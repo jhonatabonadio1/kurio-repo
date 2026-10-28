@@ -35,12 +35,42 @@ async function enableMocking() {
   await startMockWorker()
 }
 
-enableMocking().then(() => {
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>
-    </StrictMode>,
+const root = createRoot(document.getElementById('root')!)
+
+enableMocking().then(
+  () => {
+    root.render(
+      <StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+        </QueryClientProvider>
+      </StrictMode>,
+    )
+  },
+  (error: unknown) => {
+    // Without the worker every request would fail; say why instead of a blank page.
+    console.error(error)
+    root.render(<MockStartupError />)
+  },
+)
+
+function MockStartupError() {
+  return (
+    <main role="alert" className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-4 px-6">
+      <p className="text-sm font-bold tracking-[0.1em]">KURIO</p>
+      <h1 className="text-2xl font-bold">Não foi possível iniciar a API simulada</h1>
+      <p className="text-sm leading-6 text-text-secondary">
+        Esta demonstração usa um Service Worker (MSW) para simular a API. Seu navegador bloqueou o registro dele,
+        por exemplo em uma janela privada com cookies bloqueados ou em um navegador embutido. Abra o site em uma
+        janela normal do Chrome, Edge, Firefox ou Safari.
+      </p>
+      <button
+        type="button"
+        onClick={() => window.location.reload()}
+        className="mt-2 h-10 w-fit rounded-md bg-primary px-6 text-sm font-bold text-ink"
+      >
+        Tentar novamente
+      </button>
+    </main>
   )
-})
+}
