@@ -3,6 +3,7 @@ import { useRouter } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
 import { mergeGuestCart } from '@/features/cart/api'
+import { checkoutDraft } from '@/features/checkout/draft'
 import { rotateCartToken } from '@/shared/auth/cart-token'
 import { sessionStore } from '@/shared/auth/session-store'
 import { toast } from '@/shared/ui/toaster'
@@ -43,6 +44,8 @@ export function SessionSync() {
             })
         }
         if (change.type === 'signed-out') {
+          // Expiry keeps the checkout draft so the same user can resume; logout drops it.
+          if (change.reason === 'logout') checkoutDraft.clear()
           queryClient.removeQueries({ queryKey: ['cart', 'guest'] })
           rotateCartToken()
         }

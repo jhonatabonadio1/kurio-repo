@@ -64,7 +64,7 @@ export function CartSummary({ cart }: { cart: Cart }) {
           size="lg"
           className="h-10 w-full max-md:h-15 max-md:text-base"
           disabled={!data || quote.isFetching}
-          onClick={() => void navigate({ href: '/checkout' })}
+          onClick={() => void navigate({ to: '/checkout' })}
         >
           Conectar e finalizar
         </Button>
