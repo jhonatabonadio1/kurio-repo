@@ -1,5 +1,8 @@
 import { Link, useRouterState } from '@tanstack/react-router'
-import { LogIn, Search, ShoppingCart } from 'lucide-react'
+import { LogIn, LogOut, Search, ShoppingCart } from 'lucide-react'
+
+import { useSession } from '@/features/auth/session'
+import { useLogout } from '@/features/auth/use-logout'
 
 import { cn } from '@/shared/lib/utils'
 import { buttonVariants } from '@/shared/ui/button'
@@ -15,6 +18,9 @@ const MARKET_PATHS = ['/nfts', '/cart', '/checkout', '/orders']
  */
 export function SiteHeader({ cartCount = 0 }: { cartCount?: number }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const href = useRouterState({ select: (s) => s.location.href })
+  const { user } = useSession()
+  const logout = useLogout()
   const isMarket = MARKET_PATHS.some((p) => pathname.startsWith(p))
   const navItem = 'relative flex h-[45px] items-start text-base text-foreground transition-colors hover:text-text-accent'
   const active = 'font-bold text-text-accent after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-full after:bg-primary'
@@ -62,10 +68,34 @@ export function SiteHeader({ cartCount = 0 }: { cartCount?: number }) {
               </span>
             )}
           </Link>
-          <Link to="/" hash="entrar" className={cn(buttonVariants({ size: 'sm' }), 'h-[35px] w-[100px] gap-1 text-base font-medium')}>
-            <LogIn className="size-5" />
-            Entrar
-          </Link>
+          {user ? (
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-2 text-sm" title={user.email}>
+                <span aria-hidden className="grid size-[35px] place-items-center rounded-full bg-surface-dark font-bold text-text-accent">
+                  {user.displayName.slice(0, 1).toUpperCase()}
+                </span>
+                <span className="max-w-[120px] truncate">{user.displayName}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => logout.mutate()}
+                disabled={logout.isPending}
+                className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'h-[35px] gap-1 text-sm font-medium')}
+              >
+                <LogOut className="size-4" aria-hidden />
+                Sair
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              search={{ redirect: pathname === '/login' || pathname === '/register' ? undefined : href }}
+              className={cn(buttonVariants({ size: 'sm' }), 'h-[35px] w-[100px] gap-1 text-base font-medium')}
+            >
+              <LogIn className="size-5" aria-hidden />
+              Entrar
+            </Link>
+          )}
         </div>
       </div>
     </header>
