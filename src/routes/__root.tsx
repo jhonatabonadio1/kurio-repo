@@ -1,11 +1,13 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, Link, Outlet } from '@tanstack/react-router'
 
+import { SessionSync } from '@/features/auth/session-sync'
 import { MobileTabBar } from '@/shared/layout/mobile-tab-bar'
 import { SiteFooter } from '@/shared/layout/site-footer'
 import { SiteHeader } from '@/shared/layout/site-header'
 import { Button } from '@/shared/ui/button'
 import { OutOfScopeProvider } from '@/shared/ui/out-of-scope'
+import { Toaster } from '@/shared/ui/toaster'
 
 export type RouterContext = { queryClient: QueryClient }
 
@@ -31,6 +33,8 @@ function RootLayout() {
         <SiteFooter />
       </div>
       <MobileTabBar />
+      <SessionSync />
+      <Toaster />
     </OutOfScopeProvider>
   )
 }
