@@ -6,6 +6,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import { queryClient } from '@/app/query-client'
+import { parseSearch, stringifySearch } from '@/app/search-params'
 import { env } from '@/env'
 import { routeTree } from './routeTree.gen'
 
@@ -13,7 +14,11 @@ const router = createRouter({
   routeTree,
   context: { queryClient },
   defaultPreload: 'intent',
+  // Data is managed by TanStack Query; the router should always ask it.
+  defaultPreloadStaleTime: 0,
   scrollRestoration: true,
+  parseSearch,
+  stringifySearch,
 })
 
 declare module '@tanstack/react-router' {

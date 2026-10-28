@@ -31,14 +31,24 @@ export default tseslint.config(
     // engine.io-client captures globalThis.WebSocket at import time, so a static
     // import would run before MSW patches it. Load it only via createSocket().
     files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/mocks/**'],
     rules: {
       '@typescript-eslint/no-restricted-imports': [
         'error',
-        ...['socket.io-client', 'engine.io-client'].map((name) => ({
-          name,
-          allowTypeImports: true,
-          message: 'Use createSocket() from @/shared/realtime/socket (dynamic import, after MSW starts).',
-        })),
+        {
+          paths: ['socket.io-client', 'engine.io-client'].map((name) => ({
+            name,
+            allowTypeImports: true,
+            message: 'Use createSocket() from @/shared/realtime/socket (dynamic import, after MSW starts).',
+          })),
+          // The app never imports mock data; only main.tsx loads the worker dynamically.
+          patterns: [
+            {
+              group: ['@/mocks', '@/mocks/*', '**/mocks/*'],
+              message: 'App code must not depend on mocks. Talk to the API through Axios.',
+            },
+          ],
+        },
       ],
     },
   },

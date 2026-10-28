@@ -1,7 +1,11 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, Link, Outlet } from '@tanstack/react-router'
 
+import { MobileTabBar } from '@/shared/layout/mobile-tab-bar'
+import { SiteFooter } from '@/shared/layout/site-footer'
+import { SiteHeader } from '@/shared/layout/site-header'
 import { Button } from '@/shared/ui/button'
+import { OutOfScopeProvider } from '@/shared/ui/out-of-scope'
 
 export type RouterContext = { queryClient: QueryClient }
 
@@ -12,16 +16,22 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
 function RootLayout() {
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[1200px] flex-col px-4 py-6 md:px-6 xl:px-0">
-      <header className="flex items-center justify-between border-b border-border pb-4">
-        <Link to="/" className="text-sm font-bold tracking-[0.1em] text-text-primary">
-          KURIO
-        </Link>
-      </header>
-      <main id="conteudo" className="flex-1 py-8">
-        <Outlet />
-      </main>
-    </div>
+    <OutOfScopeProvider>
+      <a
+        href="#conteudo"
+        className="sr-only z-50 rounded-md bg-primary px-4 py-2 font-bold text-ink focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+      >
+        Pular para o conteúdo
+      </a>
+      <div className="mx-auto flex min-h-dvh w-full max-w-[1248px] flex-col px-6 pt-6">
+        <SiteHeader />
+        <main id="conteudo" tabIndex={-1} className="flex-1 pt-4 md:pt-0 focus:outline-none">
+          <Outlet />
+        </main>
+        <SiteFooter />
+      </div>
+      <MobileTabBar />
+    </OutOfScopeProvider>
   )
 }
 
