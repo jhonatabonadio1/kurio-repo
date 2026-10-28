@@ -6,7 +6,14 @@ import type { CouponRecord, UserRecord, WalletRecord } from '../fixtures/account
 
 export type { CouponRecord, UserRecord, WalletRecord }
 
-export type SessionRecord = { token: string; userId: string; createdAt: string; expiresAt: string }
+export type SessionRecord = {
+  token: string
+  userId: string
+  createdAt: string
+  expiresAt: string
+  /** Authenticated requests made with it (session-expired scenario). */
+  uses: number
+}
 
 export type CartLineRecord = {
   id: string

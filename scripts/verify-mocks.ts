@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Checks the REST mock handlers in Node (same handlers the browser worker
  * uses): catalog filters, sort, pagination, errors and network scenarios.
@@ -75,6 +76,45 @@ async function main() {
   const missing = await fetch(`${BASE}/nfts/nao-existe`)
   const missingBody = (await missing.json()) as { error: { code: string } }
   check('unknown NFT -> 404 NFT_NOT_FOUND', missing.status === 404 && missingBody.error.code === 'NFT_NOT_FOUND')
+
+  // Auth
+  const post = async (path: string, body: unknown, token?: string) => {
+    const res = await fetch(`${BASE}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify(body),
+    })
+    return { status: res.status, body: (res.status === 204 ? null : await res.json()) as Record<string, any> }
+  }
+  const session = async (token: string) => (await fetch(`${BASE}/auth/session`, { headers: { Authorization: `Bearer ${token}` } })).status
+
+  const invalid = await post('/auth/register', { username: 'A', email: 'x', password: '123', confirmPassword: '321' })
+  check('register: 422 with field errors', invalid.status === 422 && ['username', 'email', 'password'].every((f) => f in invalid.body.error.fields))
+  const dup = await post('/auth/register', { username: 'alice2', email: 'ALICE@test.dev', password: 'Senha1234', confirmPassword: 'Senha1234' })
+  check('register: duplicate e-mail -> 409 EMAIL_TAKEN', dup.status === 409 && dup.body.error.code === 'EMAIL_TAKEN' && Boolean(dup.body.error.fields.email))
+  const created = await post('/auth/register', { username: 'carla', email: 'carla@test.dev', password: 'Senha1234', confirmPassword: 'Senha1234' })
+  check('register: 201 with session', created.status === 201 && typeof created.body.token === 'string' && !('passwordHash' in created.body.user))
+  const stored = db.read((s) => s.users.find((u) => u.email === 'carla@test.dev'))
+  check('password stored only as a salted hash', Boolean(stored) && stored!.passwordHash !== 'Senha1234' && stored!.passwordHash.length === 64)
+
+  const wrong = await post('/auth/login', { email: 'alice@test.dev', password: 'errada' })
+  check('login: wrong password -> 401 INVALID_CREDENTIALS', wrong.status === 401 && wrong.body.error.code === 'INVALID_CREDENTIALS')
+  const login = await post('/auth/login', { email: 'alice@test.dev', password: 'Test@1234' })
+  const token = login.body.token as string
+  check('login: alice@test.dev / Test@1234', login.status === 200 && login.body.user.id === 'usr_alice')
+  check('session: valid token -> 200', (await session(token)) === 200)
+  check('session: no token -> 401', (await fetch(`${BASE}/auth/session`)).status === 401)
+  await post('/auth/logout', {}, token)
+  check('logout ends the session', (await session(token)) === 401)
+
+  setMockConfig({ scenario: 'session-expired' })
+  const short = (await post('/auth/login', { email: 'bruno@test.dev', password: 'Test@1234' })).body.token as string
+  const statuses = [await session(short), await session(short), await session(short)]
+  check('scenario session-expired: 3rd request -> 401', statuses.join(',') === '200,200,401', statuses.join(','))
+  setMockConfig({ scenario: 'register-conflict' })
+  const conflict = await post('/auth/register', { username: 'dora', email: 'dora@test.dev', password: 'Senha1234', confirmPassword: 'Senha1234' })
+  check('scenario register-conflict -> 409', conflict.status === 409)
+  setMockConfig({ scenario: 'default' })
 
   // Scenarios
   setMockConfig({ scenario: 'empty' })
