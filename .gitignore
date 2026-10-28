@@ -1,0 +1,19 @@
+node_modules
+dist
+*.local
+.env
+.env.*
+!.env.example
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Lighthouse temp files (reports in lighthouse/reports are versioned)
+.lighthouseci/
+
+.DS_Store
+*.log
+.tanstack/

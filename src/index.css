@@ -1,0 +1,141 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/roboto-mono';
+
+/*
+ * Kurio theme, taken from the Figma variables (Marketplace de NFTs GreenMint).
+ * The design is dark-only, so there is a single set of tokens.
+ * shadcn/ui reads the semantic names (--background, --primary...);
+ * the Kurio names (--kurio-*) are kept for places the semantic set
+ * does not cover, so both stay in sync from one source.
+ */
+:root {
+  /* Figma: color/* */
+  --kurio-ink: #140d0a;
+  --kurio-surface-card: #241612;
+  --kurio-surface-dark: #38220f;
+  --kurio-border: #3f2319;
+  --kurio-border-soft: #55321f;
+  --kurio-primary: #d28a4c;
+  --kurio-secondary: #b39463;
+  --kurio-text-primary: #f7f3ec;
+  --kurio-text-secondary: #cfb28c;
+  --kurio-text-accent: #e89b55;
+  --kurio-foreground: #f5f1eb;
+
+  /* shadcn/ui semantic tokens mapped to Kurio */
+  --background: var(--kurio-ink);
+  --foreground: var(--kurio-text-primary);
+  --card: var(--kurio-surface-card);
+  --card-foreground: var(--kurio-text-primary);
+  --popover: var(--kurio-surface-card);
+  --popover-foreground: var(--kurio-text-primary);
+  --primary: var(--kurio-primary);
+  --primary-foreground: var(--kurio-ink);
+  --secondary: var(--kurio-surface-dark);
+  --secondary-foreground: var(--kurio-text-primary);
+  --muted: var(--kurio-surface-card);
+  --muted-foreground: var(--kurio-text-secondary);
+  --accent: var(--kurio-border);
+  --accent-foreground: var(--kurio-text-primary);
+  /* Not in Figma: a red that keeps 4.5:1 contrast on ink and on cards. */
+  --destructive: #f2836f;
+  --destructive-foreground: var(--kurio-ink);
+  --success: #8fcf8a;
+  --border: var(--kurio-border);
+  --input: var(--kurio-border-soft);
+  --ring: var(--kurio-text-accent);
+  --radius: 0.5rem;
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans: 'Roboto Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono: 'Roboto Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-ink: var(--kurio-ink);
+  --color-surface-card: var(--kurio-surface-card);
+  --color-surface-dark: var(--kurio-surface-dark);
+  --color-border-soft: var(--kurio-border-soft);
+  --color-brand-secondary: var(--kurio-secondary);
+  --color-text-primary: var(--kurio-text-primary);
+  --color-text-secondary: var(--kurio-text-secondary);
+  --color-text-accent: var(--kurio-text-accent);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Figma type scale */
+  --text-tiny: 0.625rem;
+  --text-display: 2.6875rem;
+  --text-display--line-height: 4.375rem;
+
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    min-height: 100dvh;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+/* Skeleton with shimmer; static under reduced motion. */
+@utility skeleton {
+  background-color: var(--kurio-surface-card);
+  background-image: linear-gradient(
+    90deg,
+    var(--kurio-surface-card) 0%,
+    var(--kurio-border) 50%,
+    var(--kurio-surface-card) 100%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+  border-radius: var(--radius-md);
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    background-image: none;
+  }
+}
