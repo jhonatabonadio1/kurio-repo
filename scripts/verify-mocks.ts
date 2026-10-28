@@ -384,6 +384,45 @@ async function main() {
   check('scenario favorite-error: 500 and nothing saved', favFail.status === 500 && (await wapi('GET', '/favorites')).body.nftIds.join() === 'golden-signal-160')
   setMockConfig({ scenario: 'default', latencyMs: 0 })
 
+  // Profile (same new account)
+  const me = async (method: string, path: string, body?: unknown, headers: Record<string, string> = {}, token = wt) => {
+    const res = await fetch(`${BASE}${path}`, {
+      method,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...headers },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    })
+    return { status: res.status, body: (await res.json()) as Record<string, any> }
+  }
+  const profileInput = { displayName: 'Wallet Tester', username: 'wallet.tester', email: 'wallet@test.dev', ensName: '', walletAlias: 'Minha' }
+  const v0 = walletUser.body.user.version as number
+  check('profile: no If-Match -> 409 VERSION_CONFLICT', (await me('PATCH', '/me', profileInput)).body.error?.code === 'VERSION_CONFLICT')
+  const saved = await me('PATCH', '/me', { ...profileInput, displayName: 'Tester Novo' }, { 'If-Match': String(v0) })
+  check(
+    'profile: save bumps version, empty ENS -> null',
+    saved.status === 200 && saved.body.user.displayName === 'Tester Novo' && saved.body.user.version === v0 + 1 && saved.body.user.ensName === null,
+  )
+  check('profile: stale version -> 409', (await me('PATCH', '/me', profileInput, { 'If-Match': String(v0) })).status === 409)
+  const takenEmail = await me('PATCH', '/me', { ...profileInput, email: 'ALICE@test.dev' }, { 'If-Match': String(v0 + 1) })
+  check('profile: e-mail of another user -> 409 EMAIL_TAKEN', takenEmail.status === 409 && Boolean(takenEmail.body.error.fields.email))
+  const badAvatar = await me('PUT', '/me/avatar', { dataUrl: 'data:text/html;base64,PGgxPg==' })
+  check('avatar: non-image -> 422', badAvatar.status === 422)
+  const avatar = await me('PUT', '/me/avatar', { dataUrl: 'data:image/png;base64,iVBORw0KGgo=' })
+  check('avatar: saved without bumping the profile version', avatar.status === 200 && avatar.body.user.avatarUrl.startsWith('data:image/png') && avatar.body.user.version === v0 + 1)
+  check('avatar: removed', (await me('DELETE', '/me/avatar')).body.user?.avatarUrl === null)
+  const wrongPw = await me('PUT', '/me/password', { currentPassword: 'errada1', newPassword: 'Nova12345', confirmPassword: 'Nova12345' })
+  check('password: wrong current -> 422 on currentPassword', wrongPw.status === 422 && Boolean(wrongPw.body.error.fields.currentPassword))
+  const otherTab = (await post('/auth/login', { email: 'wallet@test.dev', password: 'Senha1234' })).body.token as string
+  const changed = await me('PUT', '/me/password', { currentPassword: 'Senha1234', newPassword: 'Nova12345', confirmPassword: 'Nova12345' })
+  check('password: changed, other session ended', changed.status === 200 && changed.body.revokedSessions === 1 && (await session(otherTab)) === 401)
+  check('password: this session still works', (await session(wt)) === 200)
+  check('password: login with the new one', (await post('/auth/login', { email: 'wallet@test.dev', password: 'Nova12345' })).status === 200)
+  setMockConfig({ scenario: 'profile-conflict', latencyMs: 0 })
+  const conflictFirst = await me('PATCH', '/me', profileInput, { 'If-Match': String(v0 + 1) })
+  const fresh = (await me('GET', '/auth/session')).body.user
+  const conflictRetry = await me('PATCH', '/me', profileInput, { 'If-Match': String(fresh.version) })
+  check('scenario profile-conflict: 409, then saves with the new version', conflictFirst.status === 409 && conflictRetry.status === 200)
+  setMockConfig({ scenario: 'default', latencyMs: 0 })
+
   // Reset
   setMockConfig({ scenario: 'default', latencyMs: 0 })
   db.write((s) => {

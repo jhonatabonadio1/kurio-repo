@@ -58,13 +58,29 @@ export const ProfileUpdateSchema = z.object({
   displayName: z.string().trim().min(2, 'Mínimo de 2 caracteres.').max(40),
   username: UsernameSchema,
   email: z.email('Informe um e-mail válido.'),
+  /** Optional: an empty field is stored as null. */
   ensName: z
     .string()
     .trim()
-    .regex(/^[a-z0-9-]{3,32}$/, 'Use 3 a 32 caracteres: letras minúsculas, números ou "-".'),
-  walletAlias: z.string().trim().min(2, 'Mínimo de 2 caracteres.').max(30),
+    .regex(/^[a-z0-9-]{3,32}$/, 'Use 3 a 32 caracteres: letras minúsculas, números ou "-".')
+    .or(z.literal('')),
+  walletAlias: z.string().trim().min(2, 'Mínimo de 2 caracteres.').max(30).or(z.literal('')),
 })
 export type ProfileUpdate = z.infer<typeof ProfileUpdateSchema>
+
+export const ProfileResponseSchema = z.object({ user: UserSchema })
+export type ProfileResponse = z.infer<typeof ProfileResponseSchema>
+
+/** The client crops and resizes to 256×256 before upload; this caps what reaches the API. */
+export const AVATAR_SIZE = 256
+export const AVATAR_MAX_CHARS = 200_000
+export const AvatarInputSchema = z.object({
+  dataUrl: z
+    .string()
+    .max(AVATAR_MAX_CHARS, 'A imagem ficou grande demais. Tente outra.')
+    .regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/, 'Envie uma imagem PNG, JPEG ou WebP.'),
+})
+export type AvatarInput = z.infer<typeof AvatarInputSchema>
 
 export const AvatarUploadSchema = z.object({
   /** data:image/(png|jpeg|webp);base64,... — max ~1 MB after encoding. */
@@ -90,3 +106,6 @@ export const PasswordChangeSchema = z
     message: 'A nova senha deve ser diferente da atual.',
   })
 export type PasswordChange = z.infer<typeof PasswordChangeSchema>
+
+/** Changing the password ends every other session of the user. */
+export const PasswordChangeResponseSchema = z.object({ revokedSessions: z.number().int().nonnegative() })

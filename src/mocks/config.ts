@@ -20,6 +20,7 @@ export const SCENARIOS = {
   'payment-confirmed': 'Pagamento confirmado após alguns segundos',
   'payment-rejected': 'Pagamento recusado após alguns segundos',
   'favorite-error': 'Favoritar falha com 500 (desfaz a atualização otimista)',
+  'profile-conflict': 'Perfil alterado em outra aba: o primeiro salvamento retorna 409',
 } as const
 export type Scenario = keyof typeof SCENARIOS
 export const isScenario = (value: unknown): value is Scenario =>

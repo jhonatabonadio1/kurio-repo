@@ -39,7 +39,12 @@ export function MobileTabBar() {
         <Link to="/cart" className={cn(item, pathname === '/cart' && current)} aria-label="Carrinho" aria-current={pathname === '/cart' ? 'page' : undefined}>
           <ShoppingCart className="size-5" />
         </Link>
-        <Link to="/login" className={item} aria-label="Perfil">
+        <Link
+          to="/profile"
+          className={cn(item, pathname.startsWith('/profile') && current)}
+          aria-label="Minha conta"
+          aria-current={pathname.startsWith('/profile') ? 'page' : undefined}
+        >
           <User className="size-5" />
         </Link>
       </div>

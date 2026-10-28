@@ -8,7 +8,7 @@ const FEATURES = [
   { mark: 'C', title: 'Criadores em destaque', text: 'Conheça artistas, estúdios e comunidades que moldam a cultura digital na rede.' },
   { mark: 'D', title: 'Alertas de lançamentos', text: 'Receba calendários de cunhagem, novidades de listas de acesso e análises do mercado.' },
 ]
-const PROFILE_LINKS = ['Meu perfil', 'Minha coleção', 'Atividade', 'Estúdio do criador']
+const PROFILE_LINKS = ['Minha coleção', 'Atividade', 'Estúdio do criador']
 const HELP_LINKS = ['Central de ajuda', 'Como comprar NFTs', 'Carteira e segurança', 'Política do mercado', 'Denunciar item']
 const FOOTER_CATEGORIES: Category[] = ['arte-digital', 'fotografia', 'musica', 'arte-3d', 'utilidade']
 const SOCIAL = [
@@ -68,6 +68,9 @@ export function SiteFooter() {
           <p id="footer-profile" className={heading}>
             Meu perfil
           </p>
+          <Link to="/profile" className={link}>
+            Meu perfil
+          </Link>
           {PROFILE_LINKS.map((label) => (
             <OutOfScopeLink key={label} feature={label} className={link}>
               {label}

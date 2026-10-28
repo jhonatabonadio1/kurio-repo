@@ -8,6 +8,7 @@ import { useCart } from '@/features/cart/queries'
 import { cn } from '@/shared/lib/utils'
 import { buttonVariants } from '@/shared/ui/button'
 import { OutOfScopeLink } from '@/shared/ui/out-of-scope'
+import { UserAvatar } from '@/shared/ui/user-avatar'
 import { SearchDialog } from './search-dialog'
 
 const MARKET_PATHS = ['/nfts', '/cart', '/checkout', '/orders']
@@ -83,12 +84,15 @@ export function SiteHeader() {
           </Link>
           {user ? (
             <div className="flex items-center gap-3">
-              <span className="flex items-center gap-2 text-sm" title={user.email}>
-                <span aria-hidden className="grid size-[35px] place-items-center rounded-full bg-surface-dark font-bold text-text-accent">
-                  {user.displayName.slice(0, 1).toUpperCase()}
-                </span>
+              <Link
+                to="/profile"
+                className="flex items-center gap-2 rounded-full pr-1 text-sm transition-colors hover:text-text-accent"
+                title={user.email}
+                aria-label={`Minha conta (${user.displayName})`}
+              >
+                <UserAvatar user={user} />
                 <span className="max-w-[120px] truncate">{user.displayName}</span>
-              </span>
+              </Link>
               <button
                 type="button"
                 onClick={() => logout.mutate()}

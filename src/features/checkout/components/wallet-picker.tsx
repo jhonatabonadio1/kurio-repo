@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import { Check, Plus, Wallet as WalletIcon } from 'lucide-react'
 
 import { CHAIN_LABELS } from '@/contracts/catalog'
@@ -66,11 +67,16 @@ export function WalletPicker({ wallets, value, onChange, onAdd, error }: Props) 
           )
         })}
       </div>
-      {wallets.length < WALLET_LIMIT && (
-        <Button type="button" variant="ghost" size="sm" onClick={onAdd} className="self-start">
-          <Plus className="size-4" aria-hidden /> Adicionar outra carteira
-        </Button>
-      )}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {wallets.length < WALLET_LIMIT && (
+          <Button type="button" variant="ghost" size="sm" onClick={onAdd}>
+            <Plus className="size-4" aria-hidden /> Adicionar outra carteira
+          </Button>
+        )}
+        <Link to="/profile/wallets" className="text-xs font-bold text-text-accent underline">
+          Gerenciar carteiras
+        </Link>
+      </div>
     </div>
   )
 }
