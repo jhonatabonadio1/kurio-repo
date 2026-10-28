@@ -328,7 +328,7 @@ async function main() {
     address,
     secondaryAddress: '',
     walletType: 'metamask',
-    referralCode: '',
+    referralCode: 'TESTE1',
     email: 'wallet@test.dev',
     ensName: 'wallet-tester',
   })
@@ -341,7 +341,7 @@ async function main() {
   const w1 = await wapi('POST', '/wallets', walletInput(ADDR_A))
   check(
     'wallets: first one is created as primary (201)',
-    w1.status === 201 && w1.body.wallet.slot === 'primary' && w1.body.wallet.referralCode === null && !('userId' in w1.body.wallet),
+    w1.status === 201 && w1.body.wallet.slot === 'primary' && w1.body.wallet.secondaryAddress === null && !('userId' in w1.body.wallet),
   )
   const dupWallet = await wapi('POST', '/wallets', walletInput(ADDR_A.toUpperCase().replace('0X', '0x'), 'Outra'))
   check('wallets: same address -> 409 WALLET_DUPLICATE', dupWallet.status === 409 && dupWallet.body.error.code === 'WALLET_DUPLICATE' && Boolean(dupWallet.body.error.fields.address))
@@ -393,13 +393,14 @@ async function main() {
     })
     return { status: res.status, body: (await res.json()) as Record<string, any> }
   }
-  const profileInput = { displayName: 'Wallet Tester', username: 'wallet.tester', email: 'wallet@test.dev', ensName: '', walletAlias: 'Minha' }
+  const profileInput = { displayName: 'Wallet Tester', username: 'wallet.tester', email: 'wallet@test.dev', ensName: 'wallet-tester', walletAlias: 'Minha' }
   const v0 = walletUser.body.user.version as number
+  check('profile: ENS is required (Figma)', (await me('PATCH', '/me', { ...profileInput, ensName: '' }, { 'If-Match': String(v0) })).status === 422)
   check('profile: no If-Match -> 409 VERSION_CONFLICT', (await me('PATCH', '/me', profileInput)).body.error?.code === 'VERSION_CONFLICT')
   const saved = await me('PATCH', '/me', { ...profileInput, displayName: 'Tester Novo' }, { 'If-Match': String(v0) })
   check(
-    'profile: save bumps version, empty ENS -> null',
-    saved.status === 200 && saved.body.user.displayName === 'Tester Novo' && saved.body.user.version === v0 + 1 && saved.body.user.ensName === null,
+    'profile: save bumps version',
+    saved.status === 200 && saved.body.user.displayName === 'Tester Novo' && saved.body.user.version === v0 + 1 && saved.body.user.ensName === 'wallet-tester',
   )
   check('profile: stale version -> 409', (await me('PATCH', '/me', profileInput, { 'If-Match': String(v0) })).status === 409)
   const takenEmail = await me('PATCH', '/me', { ...profileInput, email: 'ALICE@test.dev' }, { 'If-Match': String(v0 + 1) })

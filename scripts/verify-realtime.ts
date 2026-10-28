@@ -61,7 +61,7 @@ check('malformed event is ignored', editionPrice() === '2.50')
 const order: Order = {
   id: 'ord_1', status: 'pending', version: 1, createdAt: '', updatedAt: '', network: 'ethereum',
   wallet: { id: 'w', label: 'Principal', type: 'metamask' }, buyer: { fullName: 'Alice', email: 'alice@test.dev' },
-  txHash: null, rejectReason: null,
+  note: null, txHash: null, rejectReason: null,
   receipt: { lines: [], subtotal: '1' as any, coupon: null, discount: '0' as any, networkFee: '0.016' as any, total: '1.016' as any },
 }
 const key = orderKeys.detail('usr_alice', order.id)

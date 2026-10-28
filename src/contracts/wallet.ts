@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { ChainSchema } from './catalog'
+import { CHAINS } from './catalog'
 
 export const WALLET_TYPES = ['metamask', 'walletconnect', 'coinbase'] as const
 export const WalletTypeSchema = z.enum(WALLET_TYPES)
@@ -20,7 +20,7 @@ const required = (label: string) => z.string().trim().min(1, `Informe ${label}.`
 export const WalletInputSchema = z.object({
   displayName: required('o nome de exibição').max(40),
   alias: required('o apelido da carteira').max(30),
-  network: ChainSchema,
+  network: z.enum(CHAINS, { error: 'Selecione uma rede.' }),
   profileName: required('o nome do perfil').max(40),
   address: z
     .string()
@@ -32,13 +32,12 @@ export const WalletInputSchema = z.object({
     .regex(/^(0x[a-fA-F0-9]{40}|[a-z0-9-]{3,32}\.eth)$/, 'Use um endereço 0x ou um nome .eth.')
     .or(z.literal(''))
     .optional(),
-  walletType: WalletTypeSchema,
+  walletType: z.enum(WALLET_TYPES, { error: 'Selecione o tipo de carteira.' }),
+  // Required in the Figma "Carteiras" frame.
   referralCode: z
     .string()
     .trim()
-    .regex(/^[A-Z0-9]{4,12}$/, 'Use 4 a 12 letras maiúsculas ou números.')
-    .or(z.literal(''))
-    .optional(),
+    .regex(/^[A-Z0-9]{4,12}$/, 'Use 4 a 12 letras maiúsculas ou números.'),
   email: z.email('Informe um e-mail válido.'),
   ensName: z
     .string()
@@ -51,6 +50,7 @@ export const WalletSchema = WalletInputSchema.extend({
   id: z.string(),
   slot: WalletSlotSchema,
   secondaryAddress: z.string().nullable(),
+  /** Wallets saved before the code became required (Figma) may have none. */
   referralCode: z.string().nullable(),
   version: z.number().int().nonnegative(),
 })

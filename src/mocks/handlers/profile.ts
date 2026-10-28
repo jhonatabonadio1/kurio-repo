@@ -79,8 +79,8 @@ export const profileHandlers = [
           displayName: input.displayName,
           username: input.username,
           email,
-          ensName: input.ensName || null,
-          walletAlias: input.walletAlias || null,
+          ensName: input.ensName,
+          walletAlias: input.walletAlias,
         }, true),
       )
     }),

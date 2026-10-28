@@ -58,13 +58,12 @@ export const ProfileUpdateSchema = z.object({
   displayName: z.string().trim().min(2, 'Mínimo de 2 caracteres.').max(40),
   username: UsernameSchema,
   email: z.email('Informe um e-mail válido.'),
-  /** Optional: an empty field is stored as null. */
+  // Required in the Figma ("Perfil do colecionador" marks every field).
   ensName: z
     .string()
     .trim()
-    .regex(/^[a-z0-9-]{3,32}$/, 'Use 3 a 32 caracteres: letras minúsculas, números ou "-".')
-    .or(z.literal('')),
-  walletAlias: z.string().trim().min(2, 'Mínimo de 2 caracteres.').max(30).or(z.literal('')),
+    .regex(/^[a-z0-9-]{3,32}$/, 'Use 3 a 32 caracteres: letras minúsculas, números ou "-".'),
+  walletAlias: z.string().trim().min(2, 'Mínimo de 2 caracteres.').max(30),
 })
 export type ProfileUpdate = z.infer<typeof ProfileUpdateSchema>
 

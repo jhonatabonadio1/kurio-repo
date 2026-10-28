@@ -65,7 +65,7 @@ export const orderHandlers = [
 
       const parsed = CreateOrderInputSchema.safeParse(body)
       if (!parsed.success) return errors.validation(zodFields(parsed.error))
-      const { quoteId, walletId, network, buyer } = parsed.data
+      const { quoteId, walletId, network, buyer, provider, note } = parsed.data
 
       const quote = db.read((s) => s.quotes[quoteId])
       if (!quote || quote.ownerKey !== userOwnerKey(auth.user.id)) {
@@ -122,8 +122,9 @@ export const orderHandlers = [
         createdAt: new Date(now).toISOString(),
         updatedAt: new Date(now).toISOString(),
         network,
-        wallet: { id: wallet.id, label: `${wallet.displayName} · ${WALLET_TYPE_LABELS[wallet.walletType]}`, type: wallet.walletType },
+        wallet: { id: wallet.id, label: `${wallet.displayName} · ${WALLET_TYPE_LABELS[provider ?? wallet.walletType]}`, type: provider ?? wallet.walletType },
         buyer,
+        note: note || null,
         txHash: null,
         rejectReason: null,
         receipt: {

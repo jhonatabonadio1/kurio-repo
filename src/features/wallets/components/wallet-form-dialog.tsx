@@ -1,14 +1,14 @@
 import type { User } from '@/contracts/account'
-import type { Wallet, WalletInput } from '@/contracts/wallet'
+import type { Wallet } from '@/contracts/wallet'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/ui/dialog'
-import { WalletForm } from './wallet-form'
+import { WalletForm, type WalletFormValues } from './wallet-form'
 
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
   user: User
   wallet?: Wallet
-  defaults?: Partial<WalletInput>
+  defaults?: Partial<WalletFormValues>
   onSaved: (wallet: Wallet) => void
 }
 
@@ -28,6 +28,7 @@ export function WalletFormDialog({ open, onOpenChange, user, wallet, defaults, o
             user={user}
             wallet={wallet}
             defaults={defaults}
+            density="compact"
             onSaved={(saved) => {
               onSaved(saved)
               onOpenChange(false)

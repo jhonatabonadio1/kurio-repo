@@ -1,13 +1,13 @@
-import { ImageUp, Loader2, Trash2 } from 'lucide-react'
+import { ImageIcon, Loader2 } from 'lucide-react'
 import * as React from 'react'
 
 import type { User } from '@/contracts/account'
 import { Button } from '@/shared/ui/button'
 import { toast } from '@/shared/ui/toaster'
-import { UserAvatar } from '@/shared/ui/user-avatar'
 import { AVATAR_ACCEPT, AvatarImageError, toAvatarDataUrl } from '../avatar-image'
 import { useAvatarMutation } from '../mutations'
 
+/** Figma "Avatar": 50px circle, "Alterar" (primary) and "Remover" (text). Uploads at once. */
 export function AvatarEditor({ user }: { user: User }) {
   const input = React.useRef<HTMLInputElement>(null)
   const mutation = useAvatarMutation()
@@ -20,8 +20,7 @@ export function AvatarEditor({ user }: { user: User }) {
     setError(null)
     setProcessing(true)
     try {
-      const dataUrl = await toAvatarDataUrl(file)
-      await mutation.mutateAsync(dataUrl)
+      await mutation.mutateAsync(await toAvatarDataUrl(file))
       toast('Foto do perfil atualizada.', 'success')
     } catch (e) {
       setError(e instanceof AvatarImageError || e instanceof Error ? e.message : 'Não foi possível enviar a foto.')
@@ -41,36 +40,46 @@ export function AvatarEditor({ user }: { user: User }) {
   }
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-      <UserAvatar user={user} size={96} className="text-3xl" />
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" size="sm" onClick={() => input.current?.click()} disabled={busy}>
-            {busy ? <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden /> : <ImageUp className="size-4" aria-hidden />}
-            {user.avatarUrl ? 'Trocar foto' : 'Enviar foto'}
-          </Button>
-          {user.avatarUrl && (
-            <Button type="button" size="sm" variant="outline" onClick={remove} disabled={busy}>
-              <Trash2 className="size-4" aria-hidden /> Remover
-            </Button>
-          )}
-        </div>
-        <p className="text-xs text-text-secondary">PNG, JPEG ou WebP até 5 MB. A imagem é recortada em quadrado.</p>
-        {error && (
-          <p role="alert" className="text-sm text-destructive">
-            {error}
-          </p>
+    <div role="group" aria-labelledby="avatar-label" className="flex flex-col gap-2.5">
+      <span id="avatar-label" className="text-base leading-5">
+        Avatar
+      </span>
+      <div className="flex items-center gap-6">
+        {user.avatarUrl ? (
+          <img src={user.avatarUrl} alt="Sua foto de perfil" width={50} height={50} className="size-[50px] rounded-full object-cover" />
+        ) : (
+          <span className="grid size-[50px] place-items-center rounded-full bg-surface-card text-text-secondary" role="img" aria-label="Sem foto de perfil">
+            <ImageIcon className="size-5" aria-hidden />
+          </span>
         )}
-        <input
-          ref={input}
-          type="file"
-          accept={AVATAR_ACCEPT}
-          className="sr-only"
-          tabIndex={-1}
-          aria-hidden
-          onChange={(e) => void onFile(e.target.files?.[0])}
-        />
+        <Button type="button" className="w-[98px]" onClick={() => input.current?.click()} disabled={busy}>
+          {busy && <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />}
+          Alterar
+        </Button>
+        <button
+          type="button"
+          onClick={() => (user.avatarUrl ? remove() : toast('Você ainda não tem foto de perfil.', 'info'))}
+          disabled={busy}
+          className="text-base text-foreground transition-colors hover:text-text-accent"
+        >
+          Remover
+        </button>
       </div>
+      {error && (
+        <p role="alert" className="text-xs font-medium text-destructive">
+          {error}
+        </p>
+      )}
+      <input
+        ref={input}
+        type="file"
+        accept={AVATAR_ACCEPT}
+        aria-label="Foto de perfil: PNG, JPEG ou WebP até 5 MB"
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden
+        onChange={(e) => void onFile(e.target.files?.[0])}
+      />
     </div>
   )
 }

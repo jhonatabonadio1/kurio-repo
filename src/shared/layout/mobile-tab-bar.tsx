@@ -7,8 +7,8 @@ import { OutOfScopeLink } from '@/shared/ui/out-of-scope'
 /** Mobile tab bar from the Figma: home, favorites, scan (centre), cart, profile. */
 export function MobileTabBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
-  // The NFT detail page has its own buy bar; auth screens are full pages (Figma).
-  if (pathname.startsWith('/nfts/') || pathname === '/login' || pathname === '/register') return null
+  // Detail and checkout have their own bottom buttons; auth screens are full pages (Figma).
+  if (pathname.startsWith('/nfts/') || pathname === '/login' || pathname === '/register' || pathname === '/checkout') return null
   const item = 'grid size-11 place-items-center rounded-full text-text-secondary transition-colors'
   const current = 'text-text-accent'
 

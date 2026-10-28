@@ -13,6 +13,10 @@ export type CheckoutDraft = {
   walletId?: string
   network?: Chain
   provider?: WalletType
+  /** Desktop: "Usar outra carteira?". */
+  useOther?: boolean
+  /** Desktop: "Observação do colecionador". */
+  note?: string
   /** Idempotency key for the order of this quote (survives refresh mid-submit). */
   attempt?: { quoteId: string; key: string }
 }

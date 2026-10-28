@@ -1,8 +1,7 @@
 import { Link, useRouterState } from '@tanstack/react-router'
-import { Heart, LogIn, LogOut, Search, ShoppingCart } from 'lucide-react'
+import { LogIn, Search, ShoppingCart, UserRound } from 'lucide-react'
 
 import { useSession } from '@/features/auth/session'
-import { useLogout } from '@/features/auth/use-logout'
 import { useCart } from '@/features/cart/queries'
 
 import { cn } from '@/shared/lib/utils'
@@ -22,7 +21,6 @@ export function SiteHeader() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const href = useRouterState({ select: (s) => s.location.href })
   const { user } = useSession()
-  const logout = useLogout()
   const cartCount = useCart().data?.itemCount ?? 0
   const isMarket = MARKET_PATHS.some((p) => pathname.startsWith(p))
   // Pages like /favorites or /login belong to neither item.
@@ -60,16 +58,6 @@ export function SiteHeader() {
               </button>
             }
           />
-          {user && (
-            <Link
-              to="/favorites"
-              className={cn('rounded-md p-1 transition-colors hover:text-text-accent', pathname === '/favorites' && 'text-text-accent')}
-              aria-label="Meus favoritos"
-              aria-current={pathname === '/favorites' ? 'page' : undefined}
-            >
-              <Heart className="size-6" />
-            </Link>
-          )}
           <Link
             to="/cart"
             className="relative rounded-md p-1 transition-colors hover:text-text-accent"
@@ -83,26 +71,16 @@ export function SiteHeader() {
             )}
           </Link>
           {user ? (
-            <div className="flex items-center gap-3">
-              <Link
-                to="/profile"
-                className="flex items-center gap-2 rounded-full pr-1 text-sm transition-colors hover:text-text-accent"
-                title={user.email}
-                aria-label={`Minha conta (${user.displayName})`}
-              >
-                <UserAvatar user={user} />
-                <span className="max-w-[120px] truncate">{user.displayName}</span>
-              </Link>
-              <button
-                type="button"
-                onClick={() => logout.mutate()}
-                disabled={logout.isPending}
-                className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'h-[35px] gap-1 text-sm font-medium')}
-              >
-                <LogOut className="size-4" aria-hidden />
-                Sair
-              </button>
-            </div>
+            // Same slot and style as the Figma "Entrar" button; "Sair" lives in the "Meu perfil" menu.
+            <Link
+              to="/profile"
+              className={cn(buttonVariants({ size: 'sm' }), 'h-[35px] max-w-[180px] min-w-[100px] gap-1.5 text-base font-medium')}
+              title={user.email}
+              aria-label={`Minha conta (${user.displayName})`}
+            >
+              {user.avatarUrl ? <UserAvatar user={user} size={22} /> : <UserRound className="size-5 shrink-0" aria-hidden />}
+              <span className="truncate">{user.displayName.split(' ')[0]}</span>
+            </Link>
           ) : (
             <Link
               to="/login"

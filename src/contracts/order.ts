@@ -23,6 +23,10 @@ export const CreateOrderInputSchema = z.object({
   walletId: z.string(),
   network: ChainSchema,
   buyer: BuyerSchema,
+  /** "Carteira e rede": the app that signs the payment (defaults to the wallet's own type). */
+  provider: WalletTypeSchema.optional(),
+  /** "Observação do colecionador (opcional)". */
+  note: z.string().trim().max(500, 'Use até 500 caracteres.').optional(),
 })
 export type CreateOrderInput = z.infer<typeof CreateOrderInputSchema>
 
@@ -46,6 +50,8 @@ export const OrderSchema = z.object({
   network: ChainSchema,
   wallet: z.object({ id: z.string(), label: z.string(), type: WalletTypeSchema }),
   buyer: BuyerSchema,
+  /** Orders saved before notes existed have none. */
+  note: z.string().nullable().default(null),
   /** Simulated; set when confirmed. */
   txHash: z.string().nullable(),
   rejectReason: z.string().nullable(),

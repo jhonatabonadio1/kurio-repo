@@ -1,26 +1,32 @@
 import { useQuery } from '@tanstack/react-query'
-import { Pencil, Plus, Star, Trash2, Wallet as WalletIcon } from 'lucide-react'
 import * as React from 'react'
 
 import type { User } from '@/contracts/account'
-import { CHAIN_LABELS } from '@/contracts/catalog'
-import { WALLET_LIMIT, WALLET_TYPE_LABELS, type Wallet } from '@/contracts/wallet'
+import type { Wallet } from '@/contracts/wallet'
 import { Button } from '@/shared/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/shared/ui/dialog'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { toast } from '@/shared/ui/toaster'
 import { useWalletMutation, walletsQueryOptions } from '../queries'
-import { WalletFormDialog } from './wallet-form-dialog'
+import { WalletForm, walletToValues, type WalletFormValues } from './wallet-form'
 
-type Editing = { mode: 'create' } | { mode: 'edit'; wallet: Wallet } | null
+const link = 'text-base text-text-accent transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50'
 
-/** Profile › Carteiras: primary + secondary, every change confirmed by the API. */
+/** Copy of the primary wallet for "Igual à carteira principal" (the address must still be another one). */
+function copyOf(primary: Wallet): Partial<WalletFormValues> {
+  return { ...walletToValues(primary), displayName: '', address: '', secondaryAddress: '' }
+}
+
+/** Figma "Desktop / Carteiras": primary form, then the secondary block. Every change is confirmed by the API. */
 export function WalletManager({ user }: { user: User }) {
   const wallets = useQuery(walletsQueryOptions(user.id))
   const mutation = useWalletMutation(user.id)
-  const [editing, setEditing] = React.useState<Editing>(null)
+  const [addingSecondary, setAddingSecondary] = React.useState(false)
+  const [sameAsPrimary, setSameAsPrimary] = React.useState(false)
   const [removing, setRemoving] = React.useState<Wallet | null>(null)
   const list = wallets.data?.wallets ?? []
+  const primary = list.find((w) => w.slot === 'primary')
+  const secondary = list.find((w) => w.slot === 'secondary')
 
   const makePrimary = (wallet: Wallet) =>
     mutation.mutate(
@@ -32,8 +38,8 @@ export function WalletManager({ user }: { user: User }) {
     )
 
   const confirmRemove = () => {
-    if (!removing) return
     const wallet = removing
+    if (!wallet) return
     mutation.mutate(
       { type: 'delete', id: wallet.id },
       {
@@ -48,15 +54,15 @@ export function WalletManager({ user }: { user: User }) {
 
   if (wallets.isPending) {
     return (
-      <div className="grid gap-4 md:grid-cols-2" aria-busy="true" aria-label="Carregando carteiras">
-        <Skeleton className="h-52" />
-        <Skeleton className="h-52" />
+      <div className="flex flex-col gap-6" aria-busy="true" aria-label="Carregando carteiras">
+        <Skeleton className="h-10 w-72" />
+        <Skeleton className="h-96" />
       </div>
     )
   }
   if (wallets.isError) {
     return (
-      <div role="alert" className="flex flex-col items-start gap-3 rounded-lg bg-card p-6">
+      <div role="alert" className="flex flex-col items-start gap-3">
         <p className="text-sm text-destructive">{wallets.error.message}</p>
         <Button size="sm" onClick={() => void wallets.refetch()}>
           Tentar novamente
@@ -66,86 +72,111 @@ export function WalletManager({ user }: { user: User }) {
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-text-secondary" aria-live="polite">
-          {list.length} de {WALLET_LIMIT} carteiras. A principal vem selecionada no pagamento.
-        </p>
-        {list.length < WALLET_LIMIT && (
-          <Button size="sm" onClick={() => setEditing({ mode: 'create' })}>
-            <Plus className="size-4" aria-hidden /> Cadastrar carteira
-          </Button>
-        )}
-      </div>
-
-      {list.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border-soft px-6 py-12 text-center">
-          <WalletIcon className="size-10 text-text-accent" aria-hidden />
-          <h2 className="text-lg font-bold">Nenhuma carteira cadastrada</h2>
-          <p className="max-w-sm text-sm leading-6 text-text-secondary">Cadastre uma carteira para receber os NFTs que você comprar.</p>
+    <div className="flex flex-col">
+      <section aria-labelledby="primary-title">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <h1 id="primary-title" className="text-lg leading-6 font-bold">
+              Carteira principal
+            </h1>
+            <p className="text-sm text-text-secondary">Estas carteiras ficam disponíveis no pagamento e para receber NFTs comprados.</p>
+          </div>
+          {primary ? (
+            <button type="button" className={link} onClick={() => setRemoving(primary)}>
+              Remover
+            </button>
+          ) : (
+            <button type="button" className={link} onClick={() => document.querySelector<HTMLInputElement>('#primary-wallet input')?.focus()}>
+              Adicionar
+            </button>
+          )}
         </div>
-      ) : (
-        <ul className="grid gap-4 md:grid-cols-2">
-          {list.map((wallet) => (
-            <li key={wallet.id} className="flex flex-col gap-4 rounded-lg bg-card p-5 md:p-6">
-              <div className="flex items-start justify-between gap-3">
-                <h2 className="flex min-w-0 items-center gap-2 font-bold">
-                  <WalletIcon className="size-4 shrink-0 text-text-accent" aria-hidden />
-                  <span className="truncate">{wallet.displayName}</span>
-                </h2>
-                <span className="shrink-0 rounded bg-primary/15 px-2 py-0.5 text-xs font-medium text-text-accent">
-                  {wallet.slot === 'primary' ? 'Principal' : 'Reserva'}
-                </span>
-              </div>
-              <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
-                <dt className="text-text-secondary">Apelido</dt>
-                <dd>{wallet.alias}</dd>
-                <dt className="text-text-secondary">Rede</dt>
-                <dd>{CHAIN_LABELS[wallet.network]}</dd>
-                <dt className="text-text-secondary">Tipo</dt>
-                <dd>{WALLET_TYPE_LABELS[wallet.walletType]}</dd>
-                <dt className="text-text-secondary">Endereço</dt>
-                <dd className="break-all">{wallet.address}</dd>
-                {wallet.secondaryAddress && (
-                  <>
-                    <dt className="text-text-secondary">Secundário</dt>
-                    <dd className="break-all">{wallet.secondaryAddress}</dd>
-                  </>
-                )}
-              </dl>
-              <div className="mt-auto flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={() => setEditing({ mode: 'edit', wallet })} aria-label={`Editar ${wallet.displayName}`}>
-                  <Pencil className="size-4" aria-hidden /> Editar
-                </Button>
-                {wallet.slot !== 'primary' && (
-                  <Button size="sm" variant="outline" onClick={() => makePrimary(wallet)} disabled={mutation.isPending}>
-                    <Star className="size-4" aria-hidden /> Tornar principal
-                  </Button>
-                )}
-                <Button size="sm" variant="ghost" onClick={() => setRemoving(wallet)} aria-label={`Remover ${wallet.displayName}`}>
-                  <Trash2 className="size-4" aria-hidden /> Remover
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+        <div id="primary-wallet" className="mt-[42px]">
+          <WalletForm
+            key={primary ? `${primary.id}:${primary.version}` : 'new-primary'}
+            user={user}
+            wallet={primary}
+            onSaved={(saved) => toast(primary ? `Carteira "${saved.displayName}" atualizada.` : `Carteira "${saved.displayName}" cadastrada como principal.`, 'success')}
+          />
+        </div>
+      </section>
 
-      <WalletFormDialog
-        open={editing !== null}
-        onOpenChange={(open) => !open && setEditing(null)}
-        user={user}
-        wallet={editing?.mode === 'edit' ? editing.wallet : undefined}
-        onSaved={(saved) => toast(editing?.mode === 'edit' ? `Carteira "${saved.displayName}" atualizada.` : `Carteira "${saved.displayName}" cadastrada.`, 'success')}
-      />
+      <section aria-labelledby="secondary-title" className="mt-10">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <h2 id="secondary-title" className="text-lg leading-6 font-bold">
+              Carteira secundária
+            </h2>
+            {!secondary && (
+              <p className="text-sm text-text-secondary">
+                {primary ? 'Você ainda não adicionou uma carteira secundária.' : 'Cadastre a carteira principal primeiro.'}
+              </p>
+            )}
+          </div>
+          {secondary ? (
+            <div className="flex gap-5">
+              <button type="button" className={link} onClick={() => makePrimary(secondary)} disabled={mutation.isPending}>
+                Tornar principal
+              </button>
+              <button type="button" className={link} onClick={() => setRemoving(secondary)}>
+                Remover
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-5">
+              <label className="flex cursor-pointer items-center gap-2 text-base has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50">
+                <input
+                  type="checkbox"
+                  checked={sameAsPrimary}
+                  disabled={!primary}
+                  onChange={(e) => {
+                    setSameAsPrimary(e.target.checked)
+                    setAddingSecondary(true)
+                  }}
+                  className="size-[18px] appearance-none rounded-full border-2 border-primary checked:border-[5px] checked:bg-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                />
+                Igual à carteira principal
+              </label>
+              <button type="button" className={link} disabled={!primary} onClick={() => setAddingSecondary(true)}>
+                Adicionar
+              </button>
+            </div>
+          )}
+        </div>
+        {(secondary || (addingSecondary && primary)) && (
+          <div className="mt-[42px]">
+            <WalletForm
+              key={secondary ? `${secondary.id}:${secondary.version}` : `new-secondary:${sameAsPrimary}`}
+              user={user}
+              wallet={secondary}
+              defaults={!secondary && sameAsPrimary && primary ? copyOf(primary) : undefined}
+              onSaved={(saved) => {
+                if (!secondary) {
+                  setAddingSecondary(false)
+                  setSameAsPrimary(false)
+                }
+                toast(secondary ? `Carteira "${saved.displayName}" atualizada.` : `Carteira "${saved.displayName}" cadastrada como secundária.`, 'success')
+              }}
+              onCancel={
+                secondary
+                  ? undefined
+                  : () => {
+                      setAddingSecondary(false)
+                      setSameAsPrimary(false)
+                    }
+              }
+            />
+          </div>
+        )}
+      </section>
 
       <Dialog open={removing !== null} onOpenChange={(open) => !open && !mutation.isPending && setRemoving(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Remover carteira?</DialogTitle>
             <DialogDescription>
-              {removing?.slot === 'primary' && list.length > 1
-                ? `"${removing.displayName}" é a principal. A outra carteira passa a ser a principal.`
+              {removing?.slot === 'primary' && secondary
+                ? `"${removing.displayName}" é a principal. A carteira secundária passa a ser a principal.`
                 : `"${removing?.displayName ?? ''}" deixa de aparecer no pagamento. Pedidos já feitos não mudam.`}
             </DialogDescription>
           </DialogHeader>

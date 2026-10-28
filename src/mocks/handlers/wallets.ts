@@ -32,7 +32,6 @@ function toRecordFields(input: WalletInput) {
   return {
     ...input,
     secondaryAddress: input.secondaryAddress || null,
-    referralCode: input.referralCode || null,
   }
 }
 
