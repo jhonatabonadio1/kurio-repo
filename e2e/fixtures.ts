@@ -25,8 +25,7 @@ export class Mocks {
   constructor(private readonly page: Page) {}
 
   private async post<T>(path: string, body?: unknown): Promise<T> {
-    // The app renders only after the MSW worker started (src/main.tsx).
-    await this.page.locator('#conteudo').waitFor({ state: 'attached' })
+    await this.ready()
     return this.page.evaluate(
       async ([url, payload]) => {
         const res = await fetch(url as string, {
@@ -61,8 +60,13 @@ export class Mocks {
   }
 
   /** Mock server state (read-only view of what the API holds). */
+  /** The MSW worker is running (src/main.tsx sets <html data-mocks="ready">). */
+  async ready() {
+    await expect(this.page.locator('html')).toHaveAttribute('data-mocks', 'ready')
+  }
+
   async db<T = MockDb>(): Promise<T> {
-    await this.page.locator('#conteudo').waitFor({ state: 'attached' })
+    await this.ready()
     return this.page.evaluate(() => JSON.parse(localStorage.getItem('kurio-mock-db') ?? '{}'))
   }
 }

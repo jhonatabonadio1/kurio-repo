@@ -8,6 +8,7 @@ import { createRoot } from 'react-dom/client'
 import { queryClient } from '@/app/query-client'
 import { parseSearch, stringifySearch } from '@/app/search-params'
 import { env } from '@/env'
+import { markMocksFailed, markMocksReady } from '@/shared/api/mocks-ready'
 import { routeTree } from './routeTree.gen'
 
 const router = createRouter({
@@ -28,7 +29,8 @@ declare module '@tanstack/react-router' {
 }
 
 // The worker must be running before the first request and before
-// socket.io-client loads (see src/shared/realtime/socket.ts).
+// socket.io-client loads: both wait for `mocksReady` (src/shared/api/mocks-ready.ts),
+// so the page itself can render while the worker starts.
 async function enableMocking() {
   if (!env.apiMocking) return
   const { startMockWorker } = await import('./mocks/browser')
@@ -36,20 +38,24 @@ async function enableMocking() {
 }
 
 const root = createRoot(document.getElementById('root')!)
+root.render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  </StrictMode>,
+)
 
 enableMocking().then(
   () => {
-    root.render(
-      <StrictMode>
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-        </QueryClientProvider>
-      </StrictMode>,
-    )
+    // Visible for E2E tests and debugging: <html data-mocks="ready">.
+    if (env.apiMocking) document.documentElement.dataset.mocks = 'ready'
+    markMocksReady()
   },
   (error: unknown) => {
     // Without the worker every request would fail; say why instead of a blank page.
     console.error(error)
+    markMocksFailed(error)
     root.render(<MockStartupError />)
   },
 )

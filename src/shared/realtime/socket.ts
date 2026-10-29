@@ -1,6 +1,7 @@
 import type { Socket } from 'socket.io-client'
 
 import { env } from '@/env'
+import { mocksReady } from '@/shared/api/mocks-ready'
 
 /**
  * Creates the app's Socket.IO client.
@@ -12,6 +13,7 @@ import { env } from '@/env'
  * keeps it out of the first JS chunk. ESLint blocks static imports elsewhere.
  */
 export async function createSocket(): Promise<Socket> {
+  await mocksReady
   const { io } = await import('socket.io-client')
   return io(env.socketUrl, {
     // The MSW Socket.IO binding only supports the WebSocket transport.

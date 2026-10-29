@@ -5,6 +5,7 @@ import { ApiError, ApiErrorBodySchema } from '@/contracts/api-error'
 import { env } from '@/env'
 import { getCartToken } from '@/shared/auth/cart-token'
 import { sessionStore } from '@/shared/auth/session-store'
+import { mocksReady } from './mocks-ready'
 
 /** The only HTTP client. Every REST call goes through it (and through MSW in mock mode). */
 export const http = axios.create({
@@ -16,7 +17,8 @@ export const http = axios.create({
 /** Codes after which the stored token is useless. */
 const DEAD_SESSION_CODES = new Set(['SESSION_EXPIRED', 'INVALID_SESSION'])
 
-http.interceptors.request.use((config) => {
+http.interceptors.request.use(async (config) => {
+  await mocksReady
   const token = sessionStore.token()
   if (token) config.headers.set('Authorization', `Bearer ${token}`)
   // Identifies the guest cart; ignored by the API when a user is signed in.
