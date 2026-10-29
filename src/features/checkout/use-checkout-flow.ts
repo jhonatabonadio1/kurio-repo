@@ -11,8 +11,9 @@ import { quoteQueryOptions } from '@/features/cart/queries'
 import { checkoutDraft } from './draft'
 import { newIdempotencyKey, usePlaceOrder } from './use-place-order'
 
-export type OrderDetails = { walletId: string; buyer: Buyer; note?: string }
-export type Approval = OrderDetails & { quote: Quote; provider: WalletType; network: Chain }
+/** walletLabel is shown in the review dialog (name and short address). */
+export type OrderDetails = { walletId: string; walletLabel: string; buyer: Buyer; note?: string }
+export type Review = OrderDetails & { quote: Quote; provider: WalletType; network: Chain }
 export type SubmitError = { message: string; toCart: boolean }
 
 const messageOf = (e: unknown, fallback: string) => (e instanceof Error && e.message ? e.message : fallback)
@@ -22,7 +23,8 @@ const messageOf = (e: unknown, fallback: string) => (e instanceof Error && e.mes
  * 1. collect the order details (desktop also saves the wallet form);
  * 2. price again (staleTime 0); a total different from the one on screen
  *    stops here and shows "Os valores mudaram" until the user accepts it;
- * 3. the simulated wallet asks to approve the payment;
+ * 3. the review dialog shows items, wallet, network and totals; nothing is
+ *    sent until the user confirms there;
  * 4. the order is created with an idempotency key kept per quote, so a
  *    double click, a refresh or a lost answer can only find the same order.
  * The purchase is confirmed only by the API (order page + socket event).
@@ -41,7 +43,7 @@ export function useCheckoutFlow({ userId, cartVersion, network, provider }: { us
   const acceptedTotal = accepted?.network === network ? accepted.total : null
   const quoteChanged = Boolean(shown && acceptedTotal && shown.total !== acceptedTotal)
 
-  const [approval, setApproval] = React.useState<Approval | null>(null)
+  const [review, setReview] = React.useState<Review | null>(null)
   const [preparing, setPreparing] = React.useState(false)
   const [submitError, setSubmitError] = React.useState<SubmitError | null>(null)
 
@@ -57,7 +59,7 @@ export function useCheckoutFlow({ userId, cartVersion, network, provider }: { us
       const fresh = await queryClient.fetchQuery({ ...quoteQueryOptions(cartVersion, network), staleTime: 0 })
       // The cache now holds `fresh`: a different total shows the notice.
       if (acceptedTotal && fresh.total !== acceptedTotal) return
-      setApproval({ ...details, quote: fresh, provider, network })
+      setReview({ ...details, quote: fresh, provider, network })
     } catch (e) {
       setSubmitError({
         message: messageOf(e, 'Não foi possível preparar o pedido. Tente novamente.'),
@@ -68,15 +70,13 @@ export function useCheckoutFlow({ userId, cartVersion, network, provider }: { us
     }
   }
 
-  const refuse = () => {
-    setApproval(null)
-    setSubmitError({ message: 'O pagamento foi recusado na carteira. Nada foi cobrado.', toCart: false })
-  }
+  /** "Voltar e editar": closes the review, nothing was sent. */
+  const cancel = () => setReview(null)
 
-  const approve = () => {
-    const pending = approval
+  const submit = () => {
+    const pending = review
     if (!pending) return
-    setApproval(null)
+    setReview(null)
     // One key per quote, kept across refreshes (sessionStorage).
     const saved = checkoutDraft.load(userId).attempt
     const key = saved?.quoteId === pending.quote.id ? saved.key : newIdempotencyKey()
@@ -114,9 +114,9 @@ export function useCheckoutFlow({ userId, cartVersion, network, provider }: { us
     acceptedTotal,
     acceptNewValues,
     confirm,
-    approval,
-    approve,
-    refuse,
+    review,
+    submit,
+    cancel,
     submitError,
     setSubmitError,
     busy: preparing || placeOrder.isPending,

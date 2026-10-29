@@ -11,7 +11,7 @@ export const Route = createFileRoute('/profile')({
 /** Figma desktop account frames: 310px "Meu perfil" menu, 28px gap, content. */
 function AccountLayout() {
   return (
-    <div className="grid items-start gap-7 pb-16 md:pt-[33px] lg:grid-cols-[310px_minmax(0,1fr)]">
+    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-7 pb-16 md:pt-[33px] lg:grid-cols-[310px_minmax(0,1fr)]">
       <AccountSidebar />
       <Outlet />
     </div>

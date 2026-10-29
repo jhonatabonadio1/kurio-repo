@@ -28,7 +28,7 @@ export function AccountSidebar() {
   const logout = useLogout()
 
   return (
-    <nav aria-labelledby="account-menu-title" className="flex flex-col bg-card lg:pb-0">
+    <nav aria-labelledby="account-menu-title" className="flex min-w-0 flex-col bg-card">
       <h2 id="account-menu-title" className="px-2.5 pt-4 pb-1.5 text-lg leading-6 font-bold max-lg:sr-only">
         Meu perfil
       </h2>

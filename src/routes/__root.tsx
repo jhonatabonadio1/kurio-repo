@@ -6,6 +6,7 @@ import { RealtimeSync } from '@/features/realtime/realtime-sync'
 import { MobileTabBar } from '@/shared/layout/mobile-tab-bar'
 import { SiteFooter } from '@/shared/layout/site-footer'
 import { SiteHeader } from '@/shared/layout/site-header'
+import { useDocumentTitle } from '@/shared/lib/use-document-title'
 import { Button } from '@/shared/ui/button'
 import { OutOfScopeProvider } from '@/shared/ui/out-of-scope'
 import { Toaster } from '@/shared/ui/toaster'
@@ -42,6 +43,7 @@ function RootLayout() {
 }
 
 function NotFound() {
+  useDocumentTitle('Página não encontrada — Kurio')
   return (
     <section className="mx-auto max-w-md py-24 text-center">
       <h1 className="text-2xl font-bold">Página não encontrada</h1>

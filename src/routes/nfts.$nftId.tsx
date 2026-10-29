@@ -237,6 +237,7 @@ function DetailSkeleton() {
 }
 
 function NftNotFound() {
+  useDocumentTitle('NFT não encontrado — Kurio')
   return (
     <section className="mx-auto max-w-md py-24 text-center">
       <h1 className="text-2xl font-bold">NFT não encontrado</h1>

@@ -13,9 +13,11 @@ import { Skeleton } from '@/shared/ui/skeleton'
 import { toast } from '@/shared/ui/toaster'
 import { checkoutDraft, shortAddress } from '../draft'
 import { useCheckoutFlow } from '../use-checkout-flow'
+import { useWalletConnection } from '../use-wallet-connection'
 import { CheckoutNotices } from './checkout-notices'
 import { ProviderOptions } from './provider-options'
-import { WalletApprovalDialog } from './wallet-approval-dialog'
+import { ConnectionStatus } from './connection-status'
+import { ReviewDialog } from './review-dialog'
 
 const ring = (checked: boolean) => (
   <span aria-hidden className={cn('mt-1 grid size-[18px] shrink-0 rounded-full border-2', checked ? 'border-[5px] border-primary' : 'border-text-secondary')} />
@@ -34,6 +36,7 @@ export function MobileCheckout({ user, cart, wallets }: { user: User; cart: Cart
   const provider = pickedProvider ?? wallet?.walletType ?? 'metamask'
   const network = wallet?.network ?? 'ethereum'
   const flow = useCheckoutFlow({ userId: user.id, cartVersion: cart.version, network, provider })
+  const connection = useWalletConnection(`${wallet?.id ?? 'none'}|${network}|${provider}`, provider)
   const [adding, setAdding] = React.useState(false)
   const [walletError, setWalletError] = React.useState<string | null>(null)
   const quote = flow.quote.data
@@ -50,7 +53,15 @@ export function MobileCheckout({ user, cart, wallets }: { user: User; cart: Cart
       document.getElementById('wallet-add')?.focus()
       return
     }
-    void flow.confirm(async () => ({ walletId: wallet.id, buyer: { fullName: wallet.profileName, email: wallet.email } }))
+    const run = () =>
+      void flow.confirm(async () => ({
+        walletId: wallet.id,
+        walletLabel: `${wallet.displayName} · ${wallet.secondaryAddress ?? shortAddress(wallet.address)}`,
+        buyer: { fullName: wallet.profileName, email: wallet.email },
+      }))
+    // Not connected yet: the wallet prompt comes first, then the review.
+    if (connection.connected) run()
+    else connection.request(run)
   }
 
   return (
@@ -115,6 +126,7 @@ export function MobileCheckout({ user, cart, wallets }: { user: User; cart: Cart
             checkoutDraft.update(user.id, { provider: p })
           }}
         />
+        <ConnectionStatus connection={connection} network={network} />
       </section>
 
       <div className="flex items-baseline justify-end gap-6 text-base font-bold" aria-live="polite">
@@ -148,7 +160,7 @@ export function MobileCheckout({ user, cart, wallets }: { user: User; cart: Cart
           toast(`Carteira "${saved.displayName}" cadastrada.`, 'success')
         }}
       />
-      <WalletApprovalDialog flow={flow} />
+      <ReviewDialog flow={flow} />
     </div>
   )
 }

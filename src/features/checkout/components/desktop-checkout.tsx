@@ -15,11 +15,13 @@ import { formatEth } from '@/shared/money/eth'
 import { Button } from '@/shared/ui/button'
 import { NftArtwork } from '@/shared/ui/nft-artwork'
 import { Skeleton } from '@/shared/ui/skeleton'
-import { checkoutDraft } from '../draft'
+import { checkoutDraft, shortAddress } from '../draft'
 import { useCheckoutFlow, type OrderDetails } from '../use-checkout-flow'
+import { useWalletConnection } from '../use-wallet-connection'
 import { CheckoutNotices } from './checkout-notices'
 import { ProviderOptions } from './provider-options'
-import { WalletApprovalDialog } from './wallet-approval-dialog'
+import { ConnectionStatus } from './connection-status'
+import { ReviewDialog } from './review-dialog'
 
 const roundCheck =
   'size-[18px] shrink-0 cursor-pointer appearance-none rounded-full border-2 border-primary checked:border-[5px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50'
@@ -46,6 +48,8 @@ export function DesktopCheckout({ user, cart, wallets }: { user: User; cart: Car
   const [showCoupon, setShowCoupon] = React.useState(false)
   const flow = useCheckoutFlow({ userId: user.id, cartVersion: cart.version, network, provider })
   const walletMutation = useWalletMutation(user.id)
+  // The form is the wallet; changing its network or the signing app disconnects.
+  const connection = useWalletConnection(`${network}|${provider}`, provider)
   const quote = flow.quote.data
 
   const switchSource = (other: boolean) => {
@@ -71,7 +75,12 @@ export function DesktopCheckout({ user, cart, wallets }: { user: User; cart: Car
     }
     if (!walletId) return null
     form.reset(form.getValues())
-    return { walletId, buyer: { fullName: input.profileName, email: input.email }, note: note.trim() }
+    return {
+      walletId,
+      walletLabel: `${input.displayName} · ${shortAddress(input.address)}`,
+      buyer: { fullName: input.profileName, email: input.email },
+      note: note.trim(),
+    }
   }
 
   return (
@@ -86,7 +95,12 @@ export function DesktopCheckout({ user, cart, wallets }: { user: User; cart: Car
           className="mt-[18px] flex flex-col"
           onSubmit={(e) => {
             e.preventDefault()
-            void flow.confirm(collect)
+            void (async () => {
+              // Field errors first; then the wallet prompt (if not connected), then the review.
+              if (!(await form.trigger(undefined, { shouldFocus: true }))) return
+              if (connection.connected) void flow.confirm(collect)
+              else connection.request(() => void flow.confirm(collect))
+            })()
           }}
         >
           <WalletFields form={form} density="compact" />
@@ -176,6 +190,9 @@ export function DesktopCheckout({ user, cart, wallets }: { user: User; cart: Car
             }}
           />
         </div>
+        <div className="mt-3">
+          <ConnectionStatus connection={connection} network={network} />
+        </div>
 
         <div className="mt-5 flex flex-col gap-3">
           <CheckoutNotices flow={flow} />
@@ -186,7 +203,7 @@ export function DesktopCheckout({ user, cart, wallets }: { user: User; cart: Car
         </div>
       </aside>
 
-      <WalletApprovalDialog flow={flow} />
+      <ReviewDialog flow={flow} />
     </div>
   )
 }
