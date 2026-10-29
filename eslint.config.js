@@ -28,6 +28,11 @@ export default tseslint.config(
     },
   },
   {
+    // Playwright fixtures call `use()`, which is not the React hook.
+    files: ['e2e/**/*.ts'],
+    rules: { 'react-hooks/rules-of-hooks': 'off' },
+  },
+  {
     // engine.io-client captures globalThis.WebSocket at import time, so a static
     // import would run before MSW patches it. Load it only via createSocket().
     files: ['src/**/*.{ts,tsx}'],

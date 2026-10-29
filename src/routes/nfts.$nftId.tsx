@@ -18,6 +18,7 @@ import { useDocumentTitle } from '@/shared/lib/use-document-title'
 import { cn } from '@/shared/lib/utils'
 import { formatEth } from '@/shared/money/eth'
 import { Button } from '@/shared/ui/button'
+import { RetryButton } from '@/shared/ui/retry-button'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { toast } from '@/shared/ui/toaster'
 
@@ -37,9 +38,7 @@ export const Route = createFileRoute('/nfts/$nftId')({
     <section role="alert" className="mx-auto max-w-md py-24 text-center">
       <h1 className="text-2xl font-bold">Não foi possível carregar este NFT</h1>
       <p className="mt-3 text-sm text-text-secondary">{error instanceof Error ? error.message : 'Erro inesperado.'}</p>
-      <Button className="mt-8" onClick={reset}>
-        Tentar novamente
-      </Button>
+      <RetryButton className="mt-8" reset={reset} />
     </section>
   ),
   component: NftDetailPage,

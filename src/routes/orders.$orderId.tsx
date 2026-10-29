@@ -13,6 +13,7 @@ import { useDocumentTitle } from '@/shared/lib/use-document-title'
 import { useRealtimeStatus } from '@/shared/realtime/status'
 import { formatEth } from '@/shared/money/eth'
 import { Button } from '@/shared/ui/button'
+import { RetryButton } from '@/shared/ui/retry-button'
 import { Skeleton } from '@/shared/ui/skeleton'
 
 export const Route = createFileRoute('/orders/$orderId')({
@@ -46,7 +47,7 @@ export const Route = createFileRoute('/orders/$orderId')({
       </Message>
     ) : (
       <Message icon={XCircle} title="Não foi possível carregar o pedido" text={error instanceof Error ? error.message : ''}>
-        <Button onClick={reset}>Tentar novamente</Button>
+        <RetryButton reset={reset} />
       </Message>
     ),
   component: OrderPage,

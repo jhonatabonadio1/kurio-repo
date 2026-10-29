@@ -34,6 +34,7 @@
   "include": [
     "vite.config.ts",
     "playwright.config.ts",
+    "e2e/**/*.ts",
     "tests",
     "scripts",
     "src/mocks/socket"

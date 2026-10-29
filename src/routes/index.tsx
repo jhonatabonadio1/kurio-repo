@@ -31,7 +31,13 @@ function HomePage() {
   const { search, update, clear, activeFilterCount } = useCatalogSearch()
   const list = useQuery(nftListQueryOptions(search))
   const [filtersOpen, setFiltersOpen] = React.useState(false)
-  const openFilters = React.useCallback(() => setFiltersOpen(true), [])
+  // The sheet is opened by plain buttons (mobile bar, tablet toolbar), not a
+  // SheetTrigger: remember the opener so closing gives focus back to it.
+  const opener = React.useRef<HTMLElement | null>(null)
+  const openFilters = React.useCallback(() => {
+    opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    setFiltersOpen(true)
+  }, [])
   useDocumentTitle(search.q ? `“${search.q}” — Kurio` : 'Kurio — Marketplace de NFTs')
 
   const hasFilters = activeFilterCount > 0 || Boolean(search.q) || Boolean(search.tab)
@@ -66,7 +72,15 @@ function HomePage() {
       <BlogSection />
 
       <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-        <SheetContent side="left" className="lg:hidden">
+        <SheetContent
+          side="left"
+          className="lg:hidden"
+          onCloseAutoFocus={(event) => {
+            if (!opener.current?.isConnected) return
+            event.preventDefault()
+            opener.current.focus()
+          }}
+        >
           <SheetHeader>
             <SheetTitle>Filtros</SheetTitle>
             <SheetDescription>Os resultados atualizam a cada escolha.</SheetDescription>
