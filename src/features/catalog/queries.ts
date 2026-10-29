@@ -1,7 +1,7 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query'
 
 import { toNftListParams, type CatalogSearch } from '@/contracts/catalog'
-import { fetchCollectionNfts, fetchNftDetail, fetchNftList } from './api'
+import { fetchCollectionNfts, fetchNftDetail, fetchNftList, fetchTrendingNfts } from './api'
 
 /**
  * Public catalog data: not tied to a user, so it is shared across sessions.
@@ -38,6 +38,15 @@ export const nftDetailQueryOptions = (id: string) =>
 export const collectionNftsQueryOptions = (collection: string) =>
   queryOptions({
     queryKey: catalogKeys.collection(collection),
-    queryFn: ({ signal }) => fetchCollectionNfts(collection, 6, signal),
+    // 15 others + the current one: three pages of five (Figma dots).
+    queryFn: ({ signal }) => fetchCollectionNfts(collection, 16, signal),
+    staleTime: 60_000,
+  })
+
+/** "Colecionadores também viram" (cart): trending NFTs, three pages of five. */
+export const trendingNftsQueryOptions = () =>
+  queryOptions({
+    queryKey: [...catalogKeys.all, 'trending-strip'] as const,
+    queryFn: ({ signal }) => fetchTrendingNfts(15, signal),
     staleTime: 60_000,
   })

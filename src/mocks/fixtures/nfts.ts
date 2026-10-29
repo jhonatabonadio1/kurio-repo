@@ -13,6 +13,7 @@ import { eth } from '@/shared/money/eth'
 import { ARTWORK_ALT, type ArtworkKey } from '@/shared/ui/artwork-manifest'
 import { createRandom, type Random } from '../lib/random'
 import { slugify } from '../lib/text'
+import { cheapestInStock } from '../lib/nft'
 
 /** Fixed clock for fixtures, so "new" and dates never drift between runs. */
 export const FIXTURE_NOW = Date.parse('2026-10-20T12:00:00.000Z')
@@ -101,7 +102,6 @@ function buildNft(seed: Seed, index: number, rnd: Random): NftDetail {
   const priced = editions.filter((e) => e.available > 0)
   const price = eth.min(...(priced.length ? priced : editions).map((e) => e.price))
   const listedAt = index < FIGMA_GRID.length ? FIXTURE_NOW - index * 3_600_000 : FIXTURE_NOW - rnd.int(1, 60) * DAY
-  const others = ARTWORKS.filter((a) => a !== seed.art)
   const attributes = seed.attributes ?? rnd.shuffle(ATTRIBUTES).slice(0, 3)
   const creator = rnd.pick(CREATORS)
   const chainName = CHAIN_LABELS[seed.chain]
@@ -119,6 +119,7 @@ function buildNft(seed: Seed, index: number, rnd: Random): NftDetail {
     price,
     previousPrice: seed.previousPrice && eth.cmp(seed.previousPrice, price) > 0 ? (seed.previousPrice as EthAmount) : null,
     soldOut: editions.every((e) => e.available === 0),
+    defaultEditionId: cheapestInStock(editions),
     isNew: FIXTURE_NOW - listedAt <= 10 * DAY,
     trending: seed.trending ?? false,
     listedAt: new Date(listedAt).toISOString(),
@@ -128,7 +129,8 @@ function buildNft(seed: Seed, index: number, rnd: Random): NftDetail {
     attributes,
     creator: { name: creator, royaltyPercent: 5 },
     contract: `0x${rnd.hex(4)}...${rnd.hex(4)}`,
-    gallery: [image(seed.art), ...others.map(image)],
+    // Figma: the four thumbnails show the same artwork.
+    gallery: Array.from({ length: 4 }, () => image(seed.art)),
     editions,
     rating: index === 0 ? { average: 4.8, count: 19 } : { average: rnd.int(42, 50) / 10, count: rnd.int(3, 40) },
   }

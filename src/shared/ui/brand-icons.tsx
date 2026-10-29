@@ -37,3 +37,36 @@ export function AppleIcon(props: Props) {
     </svg>
   )
 }
+
+/** Facebook "f" in brand blue (Figma social button). */
+export function FacebookIcon(props: Props) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden focusable="false" {...props}>
+      <path fill="#1877F2" d="M14 8.5V6.7c0-.8.5-1.2 1.2-1.2H17V2.2h-2.7C11.4 2.2 10 4 10 6.5v2H7.5v3.4H10V22h4V11.9h2.7l.4-3.4H14Z" />
+    </svg>
+  )
+}
+
+/* Monochrome glyphs for the footer "Redes sociais" (currentColor). */
+const mono = (d: string) =>
+  function Glyph(props: Props) {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden focusable="false" fill="currentColor" {...props}>
+        <path d={d} />
+      </svg>
+    )
+  }
+
+export const FacebookGlyph = mono('M14 8.5V6.7c0-.8.5-1.2 1.2-1.2H17V2.2h-2.7C11.4 2.2 10 4 10 6.5v2H7.5v3.4H10V22h4V11.9h2.7l.4-3.4H14Z')
+export const InstagramGlyph = mono(
+  'M12 7.3a4.7 4.7 0 1 0 0 9.4 4.7 4.7 0 0 0 0-9.4Zm0 7.7a3 3 0 1 1 0-6 3 3 0 0 1 0 6Zm4.9-8.9a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2ZM12 2c-2.7 0-3.1 0-4.1.1-3.7.2-5.6 2-5.8 5.8C2 8.9 2 9.3 2 12s0 3.1.1 4.1c.2 3.7 2 5.6 5.8 5.8 1 .1 1.4.1 4.1.1s3.1 0 4.1-.1c3.7-.2 5.6-2 5.8-5.8.1-1 .1-1.4.1-4.1s0-3.1-.1-4.1c-.2-3.7-2-5.6-5.8-5.8C15.1 2 14.7 2 12 2Zm0 1.8c2.7 0 3 0 4 .1 2.6.1 3.9 1.4 4 4 .1 1 .1 1.3.1 4s0 3-.1 4c-.1 2.6-1.4 3.9-4 4-1 .1-1.3.1-4 .1s-3 0-4-.1c-2.6-.1-3.9-1.4-4-4-.1-1-.1-1.3-.1-4s0-3 .1-4c.1-2.6 1.4-3.9 4-4 1-.1 1.3-.1 4-.1Z',
+)
+export const TwitterGlyph = mono(
+  'M22 5.9c-.7.3-1.5.5-2.4.6.9-.5 1.5-1.3 1.8-2.3-.8.5-1.7.8-2.6 1a4.1 4.1 0 0 0-7 3.7A11.6 11.6 0 0 1 3.4 4.6a4.1 4.1 0 0 0 1.3 5.5c-.7 0-1.3-.2-1.9-.5 0 2 1.4 3.7 3.3 4.1-.6.2-1.2.2-1.9.1.5 1.6 2 2.8 3.8 2.9A8.3 8.3 0 0 1 2 18.4 11.7 11.7 0 0 0 8.3 20c7.5 0 11.7-6.2 11.7-11.7v-.5c.8-.6 1.5-1.3 2-2.1Z',
+)
+export const LinkedinGlyph = mono(
+  'M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9.75h4V21H3V9.75Zm6.5 0h3.8v1.6h.1c.5-1 1.8-2 3.8-2 4 0 4.8 2.6 4.8 6V21h-4v-5c0-1.2 0-2.7-1.7-2.7s-1.9 1.3-1.9 2.6V21h-4V9.75Z',
+)
+export const YoutubeGlyph = mono(
+  'M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2C2 8.8 2 12 2 12s0 3.2.4 4.8a2.5 2.5 0 0 0 1.8 1.8c1.6.4 7.8.4 7.8.4s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8c.4-1.6.4-4.8.4-4.8s0-3.2-.4-4.8ZM10 15V9l5.2 3L10 15Z',
+)

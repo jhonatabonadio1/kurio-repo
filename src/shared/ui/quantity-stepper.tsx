@@ -9,7 +9,8 @@ type Props = {
   onChange: (value: number) => void
   /** What is being counted, for screen readers ("Quantidade de Emerald Ape #042"). */
   label: string
-  size?: 'lg' | 'sm'
+  /** lg: detail page pills. circle: cart and mobile buy bar (22px orange). ghost: mobile cart (dark). sm: legacy compact. */
+  size?: 'lg' | 'sm' | 'circle' | 'ghost'
   disabled?: boolean
   className?: string
 }
@@ -21,13 +22,16 @@ type Props = {
  */
 export function QuantityStepper({ value, min = 1, max, onChange, label, size = 'lg', disabled = false, className }: Props) {
   const button = cn(
-    'grid shrink-0 place-items-center rounded-full bg-primary text-ink transition-colors hover:bg-text-accent disabled:cursor-not-allowed disabled:opacity-40',
-    size === 'lg' ? 'h-[49.5px] w-[33px] border border-ink shadow-[0_6.6px_9.9px_rgba(20,13,10,0.15)]' : 'h-[30px] w-5 rounded-md',
+    'grid shrink-0 place-items-center rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-40',
+    size === 'ghost' ? 'size-6 bg-surface-dark/60 text-foreground hover:bg-surface-dark' : 'bg-primary text-ink hover:bg-text-accent',
+    size === 'lg' && 'h-[49.5px] w-[33px] border border-ink shadow-[0_6.6px_9.9px_rgba(20,13,10,0.15)]',
+    size === 'sm' && 'h-[30px] w-5 rounded-md',
+    size === 'circle' && 'size-[22px]',
   )
   const icon = size === 'lg' ? 'size-5' : 'size-3.5'
 
   return (
-    <div role="group" aria-label={label} className={cn('flex items-center', size === 'lg' ? 'gap-3' : 'gap-3', className)}>
+    <div role="group" aria-label={label} className={cn('flex items-center', size === 'ghost' ? 'gap-2.5' : 'gap-3', className)}>
       <button
         type="button"
         className={button}
@@ -37,7 +41,7 @@ export function QuantityStepper({ value, min = 1, max, onChange, label, size = '
       >
         <Minus className={icon} strokeWidth={2.5} aria-hidden />
       </button>
-      <output aria-live="polite" className={cn('min-w-[1.5ch] text-center tabular-nums', size === 'lg' ? 'text-xl leading-7' : 'text-base leading-6')}>
+      <output aria-live="polite" className={cn('min-w-[1.5ch] text-center tabular-nums', size === 'lg' ? 'text-xl leading-7' : size === 'ghost' ? 'text-sm' : 'text-lg leading-6')}>
         <span className="sr-only">Quantidade: </span>
         {value}
       </output>

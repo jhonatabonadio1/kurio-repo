@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
-import { ArrowLeft, ShoppingCart } from 'lucide-react'
+import { ChevronLeft, ShoppingCart } from 'lucide-react'
 
 import { NftStrip } from '@/features/catalog/components/nft-strip'
-import { nftListQueryOptions } from '@/features/catalog/queries'
+import { trendingNftsQueryOptions } from '@/features/catalog/queries'
 import { CartItems, CartItemsSkeleton } from '@/features/cart/components/cart-items'
 import { CartSummary } from '@/features/cart/components/cart-summary'
 import { cartQueryOptions, useCart } from '@/features/cart/queries'
@@ -31,23 +31,23 @@ function CartPage() {
           <button
             type="button"
             onClick={() => (router.history.canGoBack() ? router.history.back() : void router.navigate({ to: '/' }))}
-            className="absolute left-0 grid size-[35px] place-items-center rounded-full bg-card"
+            className="absolute left-0 grid size-[35px] place-items-center rounded-full bg-surface-dark/60 text-text-accent"
             aria-label="Voltar"
           >
-            <ArrowLeft className="size-5" aria-hidden />
+            <ChevronLeft className="size-5" aria-hidden />
           </button>
-          <h1 className="text-base font-bold">Carrinho de NFTs</h1>
+          <h1 className="text-lg font-bold">Carrinho de NFTs</h1>
         </div>
-        <nav aria-label="Trilha de navegação" className="hidden text-base leading-4 text-text-secondary md:block">
+        <nav aria-label="Trilha de navegação" className="hidden text-base leading-4 text-foreground md:block">
           <ol className="flex gap-1">
             <li>
-              <Link to="/" className="hover:text-foreground">
+              <Link to="/" className="hover:text-text-accent">
                 Início
               </Link>
             </li>
             <li aria-hidden>/</li>
             <li>
-              <Link to="/" hash="catalogo" className="hover:text-foreground">
+              <Link to="/" hash="catalogo" className="hover:text-text-accent">
                 Mercado
               </Link>
             </li>
@@ -85,23 +85,24 @@ function CartPage() {
             </Button>
           </div>
         ) : (
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,782px)_332px] lg:justify-between">
+          <div className="grid gap-10 max-md:pb-[360px] lg:grid-cols-[minmax(0,782px)_332px] lg:justify-between">
             <CartItems items={cart.data.items} />
-            <div className="max-md:-mx-6 max-md:rounded-t-[28px] max-md:bg-card max-md:px-6 max-md:py-6">
-              <CartSummary cart={cart.data} />
-            </div>
+            <CartSummary cart={cart.data} layout="desktop" />
+            <CartSummary cart={cart.data} layout="mobile" />
           </div>
         )}
       </div>
 
-      <AlsoViewed />
+      <div className="max-md:hidden">
+        <AlsoViewed />
+      </div>
     </div>
   )
 }
 
 /** "Colecionadores também viram": trending NFTs. */
 function AlsoViewed() {
-  const query = useQuery(nftListQueryOptions({ tab: 'trending' }))
+  const query = useQuery(trendingNftsQueryOptions())
   if (query.isError) return null
-  return <NftStrip title="Colecionadores também viram" items={query.data?.items.slice(0, 5)} />
+  return <NftStrip title="Colecionadores também viram" items={query.data?.items} />
 }

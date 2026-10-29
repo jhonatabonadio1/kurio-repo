@@ -17,7 +17,7 @@ type Props = {
   onOpenFilters: () => void
 }
 
-/** Figma "Toolbar": tabs on the left, sort on the right; filters button below lg. */
+/** Figma "Toolbar": tabs on the left, sort on the right; filters button below lg; tabs only on mobile. */
 export function CatalogToolbar({ search, update, activeFilterCount, onOpenFilters }: Props) {
   const tab = search.tab ?? 'all'
   const sort = search.sort ?? 'recent'
@@ -25,7 +25,8 @@ export function CatalogToolbar({ search, update, activeFilterCount, onOpenFilter
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
-        <div role="group" aria-label="Mostrar" className="-mx-1 flex gap-5 overflow-x-auto px-1 pb-2 text-[15px] leading-4 font-medium">
+        {/* Mobile Figma: smaller regular tabs and no filter/sort row (filters open from the search bar). */}
+        <div role="group" aria-label="Mostrar" className="-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-2 text-[13px] leading-4 md:gap-5 md:text-[15px] md:font-medium">
           {CATALOG_TABS.map((value) => (
             <button
               key={value}
@@ -44,7 +45,7 @@ export function CatalogToolbar({ search, update, activeFilterCount, onOpenFilter
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="hidden items-center gap-3 md:flex">
           <button
             type="button"
             onClick={onOpenFilters}

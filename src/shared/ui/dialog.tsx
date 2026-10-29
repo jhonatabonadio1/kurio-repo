@@ -34,11 +34,13 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  overlayClassName,
+  closeClassName,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content> & { showCloseButton?: boolean }) {
+}: React.ComponentProps<typeof DialogPrimitive.Content> & { showCloseButton?: boolean; overlayClassName?: string; closeClassName?: string }) {
   return (
     <DialogPrimitive.Portal>
-      <DialogOverlay />
+      <DialogOverlay className={overlayClassName} />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
@@ -50,7 +52,7 @@ function DialogContent({
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close
-            className="absolute top-3 right-3 rounded-md p-1.5 text-text-secondary transition-colors hover:text-foreground"
+            className={cn('absolute top-3 right-3 rounded-md p-1.5 text-text-secondary transition-colors hover:text-foreground', closeClassName)}
             aria-label="Fechar"
           >
             <XIcon className="size-5" />

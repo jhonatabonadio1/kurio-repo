@@ -8,7 +8,7 @@ import { OutOfScopeLink } from '@/shared/ui/out-of-scope'
 export function MobileTabBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   // Detail and checkout have their own bottom buttons; auth screens are full pages (Figma).
-  if (pathname.startsWith('/nfts/') || pathname === '/login' || pathname === '/register' || pathname === '/checkout') return null
+  if (pathname.startsWith('/nfts/') || pathname === '/login' || pathname === '/register' || pathname === '/checkout' || pathname === '/cart') return null
   const item = 'grid size-11 place-items-center rounded-full text-text-secondary transition-colors'
   const current = 'text-text-accent'
 

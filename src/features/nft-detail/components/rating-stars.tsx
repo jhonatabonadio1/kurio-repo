@@ -7,10 +7,10 @@ export function RatingStars({ average, count, compact = false }: { average: numb
   const label = `Avaliação ${average.toLocaleString('pt-BR')} de 5, ${count} avaliações de colecionadores`
   if (compact) {
     return (
-      <span className="flex items-center gap-1 rounded-md border border-border px-1.5 py-1 text-sm" aria-label={label}>
+      <span className="flex shrink-0 items-center gap-1 rounded-full border border-primary px-2 py-0.5 text-sm" role="img" aria-label={label}>
         <Star className="size-3.5 fill-text-accent text-text-accent" aria-hidden />
         <span aria-hidden>{average.toLocaleString('pt-BR')}</span>
-        <span aria-hidden className="text-text-secondary">({count})</span>
+        <span aria-hidden>({count})</span>
       </span>
     )
   }

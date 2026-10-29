@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, notFound, useRouter } from '@tanstack/react-router'
-import { ArrowLeft } from 'lucide-react'
+import { ChevronLeft, Heart } from 'lucide-react'
 
 import { ApiError } from '@/contracts/api-error'
 import { nftDetailQueryOptions } from '@/features/catalog/queries'
@@ -15,9 +15,9 @@ import { RelatedNfts } from '@/features/nft-detail/components/related-nfts'
 import { ShareLinks } from '@/features/nft-detail/components/share-links'
 import { editionSlug, NftDetailSearchSchema, quantityLimit, resolveEdition } from '@/features/nft-detail/edition'
 import { useDocumentTitle } from '@/shared/lib/use-document-title'
+import { cn } from '@/shared/lib/utils'
 import { formatEth } from '@/shared/money/eth'
 import { Button } from '@/shared/ui/button'
-import { HeartIconButton } from '@/shared/ui/heart-icon-button'
 import { Skeleton } from '@/shared/ui/skeleton'
 import { toast } from '@/shared/ui/toaster'
 
@@ -91,69 +91,69 @@ function NftDetailPage() {
   }
 
   return (
-    <div className="flex flex-col gap-16 pb-[190px] md:gap-24 md:pb-0">
+    <div className="flex flex-col md:gap-24">
       <div className="flex flex-col gap-7 md:pt-8">
-        <nav aria-label="Trilha de navegação" className="hidden text-base leading-4 text-text-secondary md:block">
+        <nav aria-label="Trilha de navegação" className="hidden text-base leading-4 text-foreground md:block">
           <ol className="flex gap-1">
             <li>
-              <Link to="/" className="hover:text-foreground">
+              <Link to="/" className="hover:text-text-accent">
                 Início
               </Link>
             </li>
             <li aria-hidden>/</li>
             <li>
-              <Link to="/" hash="catalogo" className="hover:text-foreground">
+              <Link to="/" hash="catalogo" className="hover:text-text-accent">
                 Mercado
               </Link>
             </li>
           </ol>
         </nav>
 
-        <article className="grid gap-8 lg:grid-cols-[minmax(0,573px)_minmax(0,595px)] lg:justify-between">
-          <div className="relative">
-            {/* Mobile top bar over the artwork (Figma "Hero"). */}
-            <div className="absolute inset-x-3 top-3 z-10 flex justify-between md:hidden">
+        <article className="grid md:gap-8 lg:grid-cols-[minmax(0,573px)_minmax(0,595px)] lg:justify-between">
+          <div>
+            {/* Figma mobile: back and favorite in their own row above the artwork. */}
+            <div className="mb-2 flex justify-between md:hidden">
               <button
                 type="button"
                 onClick={() => (router.history.canGoBack() ? router.history.back() : void navigate({ to: '/' }))}
-                className="grid size-[35px] place-items-center rounded-full bg-foreground text-ink shadow-md"
+                className="grid size-[35px] place-items-center rounded-full bg-surface-dark/60 text-text-accent"
                 aria-label="Voltar"
               >
-                <ArrowLeft className="size-5" aria-hidden />
+                <ChevronLeft className="size-5" aria-hidden />
               </button>
-              <HeartIconButton size={35} active={fav.favorite} onClick={fav.toggle} label={fav.label} />
+              <button
+                type="button"
+                onClick={fav.toggle}
+                aria-pressed={fav.favorite}
+                aria-label={fav.label}
+                className="grid size-[35px] place-items-center rounded-full bg-surface-dark/60 text-text-accent"
+              >
+                <Heart className={cn('size-[18px]', fav.favorite && 'fill-current')} aria-hidden />
+              </button>
             </div>
-            <NftGallery
-              images={nft.gallery}
-              favoriteSlot={
-                <span className="max-md:hidden">
-                  <HeartIconButton active={fav.favorite} onClick={fav.toggle} label={fav.label} />
-                </span>
-              }
-            />
+            <NftGallery images={nft.gallery} name={nft.name} />
           </div>
 
-          <div className="flex flex-col gap-6 lg:justify-between lg:gap-4">
-            <header className="flex flex-col gap-3 border-b border-border pb-3">
-              <div className="flex items-start justify-between gap-4">
+          {/* Mobile: a sheet with rounded top corners over the bottom of the artwork. */}
+          <div className="relative z-10 -mx-6 -mt-9 flex flex-col gap-5 rounded-t-[30px] bg-card px-6 pt-6 pb-56 md:mx-0 md:mt-0 md:gap-6 md:rounded-none md:bg-transparent md:p-0 lg:justify-between lg:gap-4">
+            <header className="flex flex-col gap-3 md:border-b md:border-border md:pb-3">
+              <div className="flex items-center justify-between gap-4">
                 <h1 className="text-xl font-bold md:text-[28px] md:leading-tight">{nft.name}</h1>
                 <span className="md:hidden">
                   <RatingStars average={nft.rating.average} count={nft.rating.count} compact />
                 </span>
               </div>
-              <div className="flex items-center justify-between gap-4">
+              <div className="hidden items-center justify-between gap-4 md:flex">
                 <p className="flex items-baseline gap-3 text-[22px] leading-4 font-bold text-text-accent">
                   <span className="sr-only">Preço da edição selecionada: </span>
                   {formatEth(edition.price)}
                 </p>
-                <span className="max-md:hidden">
-                  <RatingStars average={nft.rating.average} count={nft.rating.count} />
-                </span>
+                <RatingStars average={nft.rating.average} count={nft.rating.count} />
               </div>
             </header>
 
             <section aria-labelledby="about-title" className="flex flex-col gap-3">
-              <h2 id="about-title" className="text-[15px] leading-4 font-bold">
+              <h2 id="about-title" className="text-[15px] leading-4 font-bold max-md:sr-only">
                 Sobre este NFT:
               </h2>
               <p className="text-sm leading-6 text-text-secondary">{nft.about}</p>
@@ -166,7 +166,7 @@ function NftDetailPage() {
                 selectedId={edition.id}
                 onSelect={(e) => setSearch({ edicao: editionSlug(e.kind), qtd: undefined })}
               />
-              <p role="status" className="min-h-5 text-sm text-text-secondary">
+              <p role="status" className={cn('min-h-5 text-sm text-text-secondary', !unavailable && !clamped && 'max-md:sr-only')}>
                 {unavailable
                   ? 'Esta edição está esgotada. Escolha outra edição.'
                   : clamped
@@ -194,14 +194,20 @@ function NftDetailPage() {
                   <dd>{nft.attributes.join(', ')}</dd>
                 </div>
               </dl>
-              <ShareLinks name={nft.name} />
+              <div className="max-md:hidden">
+                <ShareLinks name={nft.name} />
+              </div>
             </div>
           </div>
         </article>
       </div>
 
-      <NftInfoTabs nft={nft} />
-      <RelatedNfts collection={nft.collection} excludeId={nft.id} />
+      <div className="max-md:hidden">
+        <NftInfoTabs nft={nft} />
+      </div>
+      <div className="max-md:hidden">
+        <RelatedNfts collection={nft.collection} excludeId={nft.id} />
+      </div>
       <MobileBuyBar {...actions} />
     </div>
   )

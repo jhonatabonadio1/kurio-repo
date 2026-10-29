@@ -1,5 +1,6 @@
 import { COUPON_FIXTURES, USER_FIXTURES, WALLET_FIXTURES } from '../fixtures/accounts'
 import { createNftFixtures } from '../fixtures/nfts'
+import { cheapestInStock } from '../lib/nft'
 import type { MockDbState } from './types'
 
 /**
@@ -11,7 +12,7 @@ import type { MockDbState } from './types'
  * it stays in memory.
  */
 const STORAGE_KEY = 'kurio-mock-db'
-const SCHEMA_VERSION = 2
+const SCHEMA_VERSION = 4
 
 export function createSeed(): MockDbState {
   return {
@@ -44,6 +45,17 @@ function load(): MockDbState {
     try {
       const parsed = JSON.parse(raw) as MockDbState
       if (parsed.schemaVersion === SCHEMA_VERSION) return parsed
+      // v2/v3 -> v4 keeps users, carts and orders: the gallery became four views of the
+      // main artwork (Figma) and summaries gained defaultEditionId (card cart button).
+      if (parsed.schemaVersion === 2 || parsed.schemaVersion === 3) {
+        parsed.nfts = parsed.nfts.map((nft) => ({
+          ...nft,
+          gallery: Array.from({ length: 4 }, () => nft.image),
+          defaultEditionId: cheapestInStock(nft.editions),
+        }))
+        parsed.schemaVersion = SCHEMA_VERSION
+        return parsed
+      }
     } catch {
       // Corrupted or from an older build: fall through to a fresh seed.
     }

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-router'
-import { ArrowLeft } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 
 import { requireAuth } from '@/features/auth/guards'
 import { useSession } from '@/features/auth/session'
@@ -43,12 +43,12 @@ function CheckoutPage() {
         <button
           type="button"
           onClick={() => (router.history.canGoBack() ? router.history.back() : void navigate({ to: '/cart' }))}
-          className="absolute left-0 grid size-[35px] place-items-center rounded-full bg-card"
+          className="absolute left-0 grid size-[35px] place-items-center rounded-full bg-surface-dark/60 text-text-accent"
           aria-label="Voltar"
         >
-          <ArrowLeft className="size-5" aria-hidden />
+          <ChevronLeft className="size-5" aria-hidden />
         </button>
-        <h1 className="text-base font-bold">Pagamento com carteira</h1>
+        <h1 className="text-lg font-bold">Pagamento com carteira</h1>
       </div>
       <nav aria-label="Trilha de navegação" className="hidden text-base leading-4 lg:block">
         <ol className="flex gap-1">

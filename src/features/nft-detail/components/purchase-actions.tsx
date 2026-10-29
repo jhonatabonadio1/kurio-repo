@@ -52,19 +52,19 @@ export function PurchaseActions(props: PurchaseActionsProps) {
   )
 }
 
-/** Mobile buy bar (Figma "Buy Bar"): Qtd. stepper, price, Comprar NFT and add-to-cart. */
+/** Mobile buy bar (Figma "Buy Bar"): Qtd. stepper and price, the "Comprar NFT" pill and a round cart button. */
 export function MobileBuyBar(props: PurchaseActionsProps) {
   const { name, quantity, maxQuantity, onQuantityChange, unitPrice, unavailable, onBuy, onAddToCart, busy } = props
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 rounded-t-[28px] bg-card px-6 pt-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(10,6,4,0.45)] md:hidden">
-      <div className="mx-auto flex max-w-[366px] flex-col gap-5">
+    <div className="fixed inset-x-0 bottom-0 z-40 rounded-t-[30px] bg-card px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(10,6,4,0.45)] md:hidden">
+      <div className="mx-auto flex max-w-[366px] flex-col gap-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-base" aria-hidden>
+          <div className="flex items-center gap-2.5">
+            <span className="text-base text-text-secondary" aria-hidden>
               Qtd.
             </span>
             <QuantityStepper
-              size="sm"
+              size="circle"
               label={`Quantidade de ${name}`}
               value={quantity}
               max={Math.max(1, maxQuantity)}
@@ -72,25 +72,29 @@ export function MobileBuyBar(props: PurchaseActionsProps) {
               disabled={unavailable}
             />
           </div>
-          <p className="text-lg font-bold text-text-accent">
+          <p className="text-xl font-bold text-text-accent">
             <span className="sr-only">Preço unitário: </span>
             {formatEth(unitPrice)}
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button size="xl" className="flex-1" onClick={onBuy} disabled={!onBuy || unavailable || busy}>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onBuy}
+            disabled={!onBuy || unavailable || busy}
+            className="h-[60px] w-[200px] rounded-full bg-gradient-to-r from-primary to-[#b5743f] text-base font-bold text-ink shadow-lg transition-opacity disabled:opacity-50"
+          >
             Comprar NFT
-          </Button>
-          <Button
-            size="xl"
-            variant="outline"
-            className="w-15 px-0"
+          </button>
+          <button
+            type="button"
             onClick={onAddToCart}
             disabled={!onAddToCart || unavailable || busy}
             aria-label="Adicionar ao carrinho"
+            className="grid size-[60px] place-items-center rounded-full bg-surface-dark/60 text-text-accent transition-colors hover:bg-surface-dark disabled:opacity-50"
           >
             <ShoppingCart className="size-5" aria-hidden />
-          </Button>
+          </button>
         </div>
       </div>
     </div>

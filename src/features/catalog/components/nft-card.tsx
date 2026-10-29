@@ -1,18 +1,19 @@
 import { Link } from '@tanstack/react-router'
-import type * as React from 'react'
 
 import type { NftSummary } from '@/contracts/catalog'
 import { formatEth } from '@/shared/money/eth'
 import { NftArtwork } from '@/shared/ui/nft-artwork'
 import { Skeleton } from '@/shared/ui/skeleton'
+import { CardActions } from './card-actions'
 
 export const CARD_IMAGE_SIZES = '(min-width: 1024px) 250px, (min-width: 768px) 30vw, 45vw'
 
 /** Catalog card (Figma "Frame 141"): artwork on a card-coloured block, name, price. */
-export function NftCard({ nft, priority = false, action }: { nft: NftSummary; priority?: boolean; action?: React.ReactNode }) {
+export function NftCard({ nft, priority = false }: { nft: NftSummary; priority?: boolean }) {
   return (
     <article className="group relative flex flex-col gap-3">
-      <div className="relative grid aspect-[258/300] place-items-center overflow-hidden bg-card">
+      {/* Mobile Figma: rounded card; desktop: square block. */}
+      <div className="relative grid aspect-[258/300] place-items-center overflow-hidden rounded-[20px] bg-card md:rounded-none">
         <NftArtwork
           image={nft.image}
           sizes={CARD_IMAGE_SIZES}
@@ -24,8 +25,7 @@ export function NftCard({ nft, priority = false, action }: { nft: NftSummary; pr
             ESGOTADO
           </span>
         )}
-        {/* Above the card-wide link overlay, so it stays clickable. */}
-        {action && <div className="absolute top-3 right-3 z-10">{action}</div>}
+        <CardActions nft={nft} />
       </div>
       <h3 className="text-sm leading-4 md:text-base">
         {/* The link covers the whole card (after:inset-0) but reads as the name. */}

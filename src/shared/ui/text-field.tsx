@@ -13,6 +13,8 @@ type Props = Omit<React.ComponentProps<'input'>, 'size'> & {
   hint?: string
   size?: 'md' | 'lg'
   variant?: FieldVariant
+  /** Password fields get an eye toggle unless false (Figma "Confirmar senha" has none). */
+  revealable?: boolean
 }
 
 /**
@@ -20,13 +22,13 @@ type Props = Omit<React.ComponentProps<'input'>, 'size'> & {
  * shown by border + message text, never by colour alone.
  */
 export const TextField = React.forwardRef<HTMLInputElement, Props>(function TextField(
-  { label, hideLabel = false, requiredMark, error, hint, size = 'md', variant = 'filled', id: idProp, className, type = 'text', ...props },
+  { label, hideLabel = false, requiredMark, error, hint, size = 'md', variant = 'filled', revealable = true, id: idProp, className, type = 'text', ...props },
   ref,
 ) {
   const autoId = React.useId()
   const id = idProp ?? autoId
   const [revealed, setRevealed] = React.useState(false)
-  const isPassword = type === 'password'
+  const isPassword = type === 'password' && revealable
 
   return (
     <FieldShell id={id} label={label} hideLabel={hideLabel} requiredMark={requiredMark} variant={variant} error={error} hint={hint} className={className}>

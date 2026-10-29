@@ -13,7 +13,7 @@ import {
 import { sessionStore } from '@/shared/auth/session-store'
 import { applyApiError, FormError } from '@/shared/lib/form-errors'
 import { cn } from '@/shared/lib/utils'
-import { AppleIcon, GoogleIcon } from '@/shared/ui/brand-icons'
+import { FacebookIcon, GoogleIcon } from '@/shared/ui/brand-icons'
 import { Button } from '@/shared/ui/button'
 import { OutOfScopeLink } from '@/shared/ui/out-of-scope'
 import { TextField } from '@/shared/ui/text-field'
@@ -62,6 +62,7 @@ export function LoginForm({ size, onSuccess }: FormProps) {
         autoComplete="email"
         placeholder="contato@email.com"
         size={size}
+        variant="outline"
         error={errors.email?.message}
         {...form.register('email')}
       />
@@ -72,14 +73,15 @@ export function LoginForm({ size, onSuccess }: FormProps) {
         autoComplete="current-password"
         placeholder="Senha"
         size={size}
+        variant="outline"
         error={errors.password?.message}
         {...form.register('password')}
       />
-      <OutOfScopeLink feature="Recuperação de senha" className="self-end text-sm text-text-secondary hover:text-foreground">
+      <OutOfScopeLink feature="Recuperação de senha" className="self-end text-[15px] text-text-accent hover:text-foreground">
         Esqueceu a senha?
       </OutOfScopeLink>
       <FormError message={formError} />
-      <Button type="submit" size={size === 'lg' ? 'xl' : 'lg'} className="mt-3 h-[45px] w-full" disabled={mutation.isPending}>
+      <Button type="submit" size="lg" className={cn('mt-3 w-full text-base', size === 'lg' ? 'h-[50px]' : 'h-[45px]')} disabled={mutation.isPending}>
         {mutation.isPending ? 'Entrando…' : 'Entrar'}
       </Button>
     </form>
@@ -118,8 +120,8 @@ export function RegisterForm({ size, onSuccess }: FormProps) {
         hideLabel
         autoComplete="username"
         placeholder="Nome de usuário"
-        hint="Letras minúsculas, números, _ ou ."
         size={size}
+        variant="outline"
         error={errors.username?.message}
         {...form.register('username')}
       />
@@ -130,6 +132,7 @@ export function RegisterForm({ size, onSuccess }: FormProps) {
         autoComplete="email"
         placeholder="Digite seu e-mail"
         size={size}
+        variant="outline"
         error={errors.email?.message}
         {...form.register('email')}
       />
@@ -139,8 +142,8 @@ export function RegisterForm({ size, onSuccess }: FormProps) {
         type="password"
         autoComplete="new-password"
         placeholder="Senha"
-        hint="8 a 64 caracteres, com letras e números."
         size={size}
+        variant="outline"
         error={errors.password?.message}
         {...form.register('password')}
       />
@@ -150,43 +153,50 @@ export function RegisterForm({ size, onSuccess }: FormProps) {
         type="password"
         autoComplete="new-password"
         placeholder="Confirmar senha"
+        revealable={false}
         size={size}
+        variant="outline"
         error={errors.confirmPassword?.message}
         {...form.register('confirmPassword')}
       />
       <FormError message={formError} />
-      <Button type="submit" size={size === 'lg' ? 'xl' : 'lg'} className={cn('mt-3 h-[45px] w-full')} disabled={mutation.isPending}>
+      <Button type="submit" size="lg" className={cn('mt-3 w-full text-base', size === 'lg' ? 'h-[50px]' : 'h-[45px]')} disabled={mutation.isPending}>
         {mutation.isPending ? 'Criando conta…' : size === 'lg' ? 'Criar perfil' : 'Criar conta'}
       </Button>
     </form>
   )
 }
 
-/** "Ou continue com" + two social buttons: drawn in the Figma, out of scope. */
+/** Two social buttons (Figma: Google and Facebook), out of scope. The "Ou continue com" divider is drawn by the screen. */
 export function SocialSignIn({ size }: { size: 'md' | 'lg' }) {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3 text-sm text-text-secondary">
-        <span className="h-px flex-1 bg-border" />
-        Ou continue com
-        <span className="h-px flex-1 bg-border" />
-      </div>
+    <div className="flex flex-col gap-3">
       {[
         { provider: 'Google', Icon: GoogleIcon },
-        { provider: 'Apple', Icon: AppleIcon },
+        { provider: 'Facebook', Icon: FacebookIcon },
       ].map(({ provider, Icon }) => (
         <OutOfScopeLink
           key={provider}
           feature={`Entrar com ${provider}`}
           className={cn(
-            'flex w-full items-center justify-center gap-2 rounded-md border border-border-soft text-sm font-medium transition-colors hover:border-primary',
-            size === 'lg' ? 'h-[50px]' : 'h-10',
+            'flex w-full items-center justify-center gap-2.5 rounded-md border border-border text-text-secondary transition-colors hover:border-primary hover:text-foreground',
+            size === 'lg' ? 'h-10 text-[13px]' : 'h-10 text-sm',
           )}
         >
           <Icon className="size-5 shrink-0" />
           Continuar com {provider}
         </OutOfScopeLink>
       ))}
+    </div>
+  )
+}
+
+/** "Ou continue com" over a line. `bleed` = the line runs edge to edge of the modal (Figma desktop). */
+export function OrDivider({ bleed = false }: { bleed?: boolean }) {
+  return (
+    <div className={cn('relative flex justify-center text-sm', bleed ? '-mx-20' : '')}>
+      <span aria-hidden className="absolute inset-x-0 top-1/2 h-px bg-border" />
+      <span className="relative bg-card px-3 text-foreground max-md:bg-background">Ou continue com</span>
     </div>
   )
 }

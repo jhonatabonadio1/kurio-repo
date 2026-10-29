@@ -102,6 +102,8 @@ export const NftSummarySchema = z.object({
   /** Shown struck through when the price dropped. */
   previousPrice: EthAmountSchema.nullable(),
   soldOut: z.boolean(),
+  /** Cheapest edition with stock: what the card's cart button adds. null when sold out. */
+  defaultEditionId: z.string().nullable().default(null),
   isNew: z.boolean(),
   trending: z.boolean(),
   listedAt: z.iso.datetime(),

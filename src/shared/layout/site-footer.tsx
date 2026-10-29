@@ -1,6 +1,8 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useRouterState } from '@tanstack/react-router'
 
 import { CATEGORY_LABELS, type Category } from '@/contracts/catalog'
+import { cn } from '@/shared/lib/utils'
+import { FacebookGlyph, InstagramGlyph, LinkedinGlyph, TwitterGlyph, YoutubeGlyph } from '@/shared/ui/brand-icons'
 import { OutOfScopeLink } from '@/shared/ui/out-of-scope'
 
 const FEATURES = [
@@ -12,20 +14,25 @@ const PROFILE_LINKS = ['Minha coleção', 'Atividade', 'Estúdio do criador']
 const HELP_LINKS = ['Central de ajuda', 'Como comprar NFTs', 'Carteira e segurança', 'Política do mercado', 'Denunciar item']
 const FOOTER_CATEGORIES: Category[] = ['arte-digital', 'fotografia', 'musica', 'arte-3d', 'utilidade']
 const SOCIAL = [
-  { mark: 'f', label: 'Facebook' },
-  { mark: 'ig', label: 'Instagram' },
-  { mark: 'x', label: 'X (Twitter)' },
-  { mark: 'in', label: 'LinkedIn' },
-  { mark: 'yt', label: 'YouTube' },
+  { Icon: FacebookGlyph, label: 'Facebook' },
+  { Icon: InstagramGlyph, label: 'Instagram' },
+  { Icon: TwitterGlyph, label: 'Twitter' },
+  { Icon: LinkedinGlyph, label: 'LinkedIn' },
+  { Icon: YoutubeGlyph, label: 'YouTube' },
 ]
 
 const heading = 'text-lg leading-4 font-bold'
 const link = 'text-left text-sm leading-[30px] transition-colors hover:text-text-accent'
 
 /** Footer from the Figma: feature medallions + newsletter, brand band, link columns. */
+/** Mobile frames of detail, cart, checkout and auth are app screens without the footer. */
+const APP_SCREENS = [/^\/nfts\//, /^\/cart$/, /^\/checkout$/, /^\/login$/, /^\/register$/]
+
 export function SiteFooter() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const appScreen = APP_SCREENS.some((re) => re.test(pathname))
   return (
-    <footer className="mt-24 mb-[76px] md:mb-0">
+    <footer className={cn('mt-24 mb-[76px] md:mb-0', appScreen && 'max-md:hidden')}>
       <div className="grid gap-8 bg-card p-6 md:grid-cols-2 md:p-8 lg:grid-cols-[1fr_1fr_1fr_1.35fr] lg:gap-0">
         {FEATURES.map((f) => (
           <div key={f.mark} className="flex flex-col gap-3 lg:border-r lg:border-primary lg:px-4">
@@ -109,9 +116,9 @@ export function SiteFooter() {
                   <OutOfScopeLink
                     feature={s.label}
                     aria-label={s.label}
-                    className="grid size-[30px] place-items-center rounded-md border border-primary text-xs font-bold text-text-accent transition-colors hover:bg-primary hover:text-ink"
+                    className="grid size-[30px] place-items-center rounded-md border border-primary text-text-accent transition-colors hover:bg-primary hover:text-ink"
                   >
-                    {s.mark}
+                    <s.Icon className="size-4" />
                   </OutOfScopeLink>
                 </li>
               ))}

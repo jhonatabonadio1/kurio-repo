@@ -7,7 +7,16 @@ import { toast } from '@/shared/ui/toaster'
 import { useApplyCoupon, useRemoveCoupon } from '../mutations'
 
 /** Figma "Promo Code": input with "Aplicar"; an applied code shows with "Remover". */
-export function CouponForm({ appliedCode, percentOff, size = 'md' }: { appliedCode: string | null; percentOff?: number; size?: 'md' | 'lg' }) {
+export function CouponForm({
+  appliedCode,
+  percentOff,
+  variant = 'outline',
+}: {
+  appliedCode: string | null
+  percentOff?: number
+  /** outline: desktop (orange border, attached button). pill: mobile sheet (rounded, button inside). */
+  variant?: 'outline' | 'pill'
+}) {
   const apply = useApplyCoupon()
   const remove = useRemoveCoupon()
   const [code, setCode] = React.useState('')
@@ -53,10 +62,16 @@ export function CouponForm({ appliedCode, percentOff, size = 'md' }: { appliedCo
 
   return (
     <form onSubmit={submit} noValidate className="flex flex-col gap-2">
-      <label htmlFor={inputId} className="text-base leading-4 font-bold">
+      <label htmlFor={inputId} className={cn('text-base leading-4 font-bold', variant === 'pill' && 'sr-only')}>
         Código promocional
       </label>
-      <div className={cn('flex overflow-hidden rounded-md bg-surface-dark', size === 'lg' ? 'h-[50px]' : 'h-10', error && 'ring-1 ring-destructive')}>
+      <div
+        className={cn(
+          'flex overflow-hidden',
+          variant === 'outline' ? 'h-10 rounded-md border border-primary' : 'h-[42px] rounded-full bg-surface-dark/50 p-1',
+          error && 'border-destructive ring-1 ring-destructive',
+        )}
+      >
         <input
           id={inputId}
           value={code}
@@ -71,7 +86,10 @@ export function CouponForm({ appliedCode, percentOff, size = 'md' }: { appliedCo
         <button
           type="submit"
           disabled={apply.isPending}
-          className="w-[102px] shrink-0 bg-primary text-sm font-bold text-ink transition-colors hover:bg-text-accent disabled:opacity-60"
+          className={cn(
+            'shrink-0 bg-primary text-sm font-bold text-ink transition-colors hover:bg-text-accent disabled:opacity-60',
+            variant === 'outline' ? 'w-[102px]' : 'w-[78px] rounded-full',
+          )}
         >
           {apply.isPending ? '…' : 'Aplicar'}
         </button>

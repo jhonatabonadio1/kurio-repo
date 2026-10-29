@@ -1,14 +1,18 @@
+import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { z } from 'zod'
 
+import { CatalogFilters } from '@/features/catalog/components/catalog-filters'
+import { CatalogToolbar } from '@/features/catalog/components/catalog-toolbar'
+import { NftGrid } from '@/features/catalog/components/nft-grid'
+import { nftListQueryOptions } from '@/features/catalog/queries'
 import { HeroDesktop } from '@/features/home/hero'
-import { PromoCards } from '@/features/home/promo-cards'
 import { useDocumentTitle } from '@/shared/lib/use-document-title'
 import { useMediaQuery } from '@/shared/lib/use-media-query'
 import { cn } from '@/shared/lib/utils'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/shared/ui/dialog'
 import { safeRedirect } from '../session'
-import { LoginForm, RegisterForm, SocialSignIn } from './auth-forms'
+import { LoginForm, OrDivider, RegisterForm, SocialSignIn } from './auth-forms'
 
 export type AuthMode = 'login' | 'register'
 
@@ -48,33 +52,38 @@ export function AuthScreen({ mode, search }: { mode: AuthMode; search: AuthSearc
   const close = () => void navigate({ href: search.redirect ? target : '/' })
   useDocumentTitle(`${COPY[mode].title} — Kurio`)
 
-  const content = (size: 'md' | 'lg') => (
-    <div className="flex flex-col gap-6">
-      {search.expired && (
-        <p role="status" className="rounded-md border border-primary/50 bg-primary/10 px-3 py-2 text-sm">
-          Sua sessão expirou. Entre novamente para continuar de onde parou.
-        </p>
-      )}
-      {mode === 'login' ? <LoginForm size={size} onSuccess={done} /> : <RegisterForm size={size} onSuccess={done} />}
-      <SocialSignIn size={size} />
-    </div>
+  const expired = search.expired && (
+    <p role="status" className="rounded-md border border-primary/50 bg-primary/10 px-3 py-2 text-sm">
+      Sua sessão expirou. Entre novamente para continuar de onde parou.
+    </p>
   )
+  const form = (size: 'md' | 'lg') =>
+    mode === 'login' ? <LoginForm size={size} onSuccess={done} /> : <RegisterForm size={size} onSuccess={done} />
 
   if (isDesktop) {
     return (
       <>
-        <div inert aria-hidden className="pointer-events-none flex flex-col gap-24 select-none">
-          <HeroDesktop />
-          <PromoCards />
-        </div>
+        <Backdrop />
+        {/* Figma "Sign In Modal": 500 wide, 160 from the top, the page behind stays visible. */}
         <Dialog open onOpenChange={(open) => !open && close()}>
-          <DialogContent className="max-w-[500px] gap-8 px-20 pt-12 pb-12">
-            <div className="flex flex-col items-center gap-10 text-center">
-              <ModeTabs mode={mode} search={search} />
-              <DialogTitle className="sr-only">{COPY[mode].title}</DialogTitle>
-              <DialogDescription className="text-sm leading-4">{COPY[mode].text}</DialogDescription>
+          <DialogContent
+            overlayClassName="bg-ink/10 backdrop-blur-none"
+            closeClassName="top-4 right-4 text-text-accent"
+            className="top-[160px] flex max-h-[calc(100dvh-180px)] max-w-[500px] translate-y-0 flex-col gap-0 rounded-none px-20 pt-[45px] pb-[60px] sm:px-20 sm:pt-[45px] sm:pb-[60px]"
+          >
+            <ModeTabs mode={mode} search={search} />
+            <DialogTitle className="sr-only">{COPY[mode].title}</DialogTitle>
+            <DialogDescription className="mt-[38px] text-center text-sm leading-4 text-foreground">{COPY[mode].text}</DialogDescription>
+            <div className="mt-8 flex flex-col gap-4">
+              {expired}
+              {form('md')}
             </div>
-            {content('md')}
+            <div className="mt-[31px]">
+              <OrDivider bleed />
+            </div>
+            <div className="mt-5">
+              <SocialSignIn size="md" />
+            </div>
           </DialogContent>
         </Dialog>
       </>
@@ -82,22 +91,26 @@ export function AuthScreen({ mode, search }: { mode: AuthMode; search: AuthSearc
   }
 
   return (
-    <section aria-labelledby="auth-title" className="mx-auto flex w-full max-w-[358px] flex-col gap-10 pt-14 pb-10">
+    <section aria-labelledby="auth-title" className="mx-auto flex w-full max-w-[360px] flex-col pt-14 pb-10">
       <p aria-hidden className="py-10 text-center text-[32px] font-bold tracking-[0.1em]">
         KURIO
       </p>
-      <h1 id="auth-title" className="text-center text-lg font-bold">
+      <h1 id="auth-title" className="mt-5 text-center text-lg font-bold">
         {COPY[mode].mobileTitle}
       </h1>
-      {content('lg')}
-      <p className="text-center text-base">
+      <div className="mt-7 flex flex-col gap-4">
+        {expired}
+        {form('lg')}
+      </div>
+      <div className="mt-8">
+        <OrDivider />
+      </div>
+      <div className="mt-4">
+        <SocialSignIn size="lg" />
+      </div>
+      <p className="mt-10 text-center text-sm text-text-secondary">
         {mode === 'login' ? 'Novo na Kurio? ' : 'Já tem uma conta? '}
-        <Link
-          to={mode === 'login' ? '/register' : '/login'}
-          search={search}
-          replace
-          className="font-bold text-text-accent underline-offset-4 hover:underline"
-        >
+        <Link to={mode === 'login' ? '/register' : '/login'} search={search} replace className="underline-offset-4 hover:text-foreground hover:underline">
           {mode === 'login' ? 'Crie uma conta' : 'Entre'}
         </Link>
       </p>
@@ -105,27 +118,47 @@ export function AuthScreen({ mode, search }: { mode: AuthMode; search: AuthSearc
   )
 }
 
+/** The Figma draws the modal over the home: hero and catalog, inert behind it. */
+function Backdrop() {
+  const list = useQuery(nftListQueryOptions({}))
+  const noop = () => {}
+  return (
+    <div inert aria-hidden className="pointer-events-none flex flex-col gap-24 select-none">
+      <HeroDesktop />
+      <section className="lg:grid lg:grid-cols-[310px_1fr] lg:gap-12">
+        <div className="hidden lg:block">
+          <CatalogFilters facets={list.data?.facets} search={{}} update={noop} idPrefix="backdrop" />
+        </div>
+        <div className="flex flex-col gap-8">
+          <CatalogToolbar search={{}} update={noop} activeFilterCount={0} onOpenFilters={noop} />
+          <NftGrid query={list} hasFilters={false} onClearFilters={noop} />
+        </div>
+      </section>
+    </div>
+  )
+}
+
 /** "Entrar | Criar conta" switch at the top of the desktop modal. */
 function ModeTabs({ mode, search }: { mode: AuthMode; search: AuthSearch }) {
-  const item = 'text-base leading-4 transition-colors'
+  const item = 'text-xl leading-6 transition-colors'
   return (
-    <nav aria-label="Acesso" className="flex items-center gap-2">
+    <nav aria-label="Acesso" className="flex items-center justify-center">
       <Link
         to="/login"
         search={search}
         replace
         aria-current={mode === 'login' ? 'page' : undefined}
-        className={cn(item, mode === 'login' ? 'font-bold text-text-accent' : 'text-text-secondary hover:text-foreground')}
+        className={cn(item, mode === 'login' ? 'text-text-accent' : 'text-foreground hover:text-text-accent')}
       >
         Entrar
       </Link>
-      <span aria-hidden className="mx-2 h-5 w-px bg-border-soft" />
+      <span aria-hidden className="mx-1 h-6 w-px bg-primary" />
       <Link
         to="/register"
         search={search}
         replace
         aria-current={mode === 'register' ? 'page' : undefined}
-        className={cn(item, mode === 'register' ? 'font-bold text-text-accent' : 'text-text-secondary hover:text-foreground')}
+        className={cn(item, mode === 'register' ? 'text-text-accent' : 'text-foreground hover:text-text-accent')}
       >
         Criar conta
       </Link>

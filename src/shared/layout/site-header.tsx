@@ -1,5 +1,5 @@
 import { Link, useRouterState } from '@tanstack/react-router'
-import { LogIn, Search, ShoppingCart, UserRound } from 'lucide-react'
+import { LogOut, Search, ShoppingCart, UserRound } from 'lucide-react'
 
 import { useSession } from '@/features/auth/session'
 import { useCart } from '@/features/cart/queries'
@@ -50,22 +50,23 @@ export function SiteHeader() {
           </OutOfScopeLink>
         </nav>
 
-        <div className="flex items-center gap-7">
+        {/* Figma: search (20) and cart (24) 50px apart, then the 100×35 button 36px after the cart. */}
+        <div className="flex items-center gap-[26px]">
           <SearchDialog
             trigger={
               <button type="button" className="rounded-md p-1 transition-colors hover:text-text-accent" aria-label="Buscar NFTs">
-                <Search className="size-5" />
+                <Search className="size-[22px]" strokeWidth={2.25} />
               </button>
             }
           />
           <Link
             to="/cart"
-            className="relative rounded-md p-1 transition-colors hover:text-text-accent"
+            className="relative mr-2.5 rounded-md p-0.5 transition-colors hover:text-text-accent"
             aria-label={cartCount ? `Carrinho, ${cartCount} itens` : 'Carrinho'}
           >
-            <ShoppingCart className="size-6" />
+            <ShoppingCart className="size-6" strokeWidth={1.75} />
             {cartCount > 0 && (
-              <span className="absolute -top-0.5 -right-1 grid size-4 place-items-center rounded-full bg-primary text-tiny font-medium text-ink">
+              <span className="absolute -top-1.5 -right-1.5 grid size-4 place-items-center rounded-full bg-primary text-[10px] leading-none font-bold text-foreground">
                 {cartCount}
               </span>
             )}
@@ -87,7 +88,8 @@ export function SiteHeader() {
               search={{ redirect: pathname === '/login' || pathname === '/register' ? undefined : href }}
               className={cn(buttonVariants({ size: 'sm' }), 'h-[35px] w-[100px] gap-1 text-base font-medium')}
             >
-              <LogIn className="size-5" aria-hidden />
+              {/* Figma's "Entrar" icon: open box on the left, arrow pointing right. */}
+              <LogOut className="size-5" aria-hidden />
               Entrar
             </Link>
           )}

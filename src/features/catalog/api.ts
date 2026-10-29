@@ -18,3 +18,10 @@ export const fetchCollectionNfts = (collection: string, limit: number, signal?: 
 
 export const fetchNftDetail = (id: string, signal?: AbortSignal) =>
   getParsed(`/nfts/${encodeURIComponent(id)}`, NftDetailSchema, { signal })
+
+/** NFTs for the cart strip "Colecionadores também viram": the most recent listings. */
+export const fetchTrendingNfts = (limit: number, signal?: AbortSignal) =>
+  getParsed('/nfts', NftListResponseSchema, {
+    params: { pageSize: String(limit), page: '1', sort: 'recent', tab: 'all' },
+    signal,
+  })

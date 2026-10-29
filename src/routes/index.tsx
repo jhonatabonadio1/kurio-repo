@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import * as React from 'react'
 
-import { CatalogSearchSchema } from '@/contracts/catalog'
+import { CATALOG_SORT_LABELS, CATALOG_SORTS, CatalogSearchSchema, type CatalogSort } from '@/contracts/catalog'
 import { CatalogFilters } from '@/features/catalog/components/catalog-filters'
 import { CatalogPagination } from '@/features/catalog/components/catalog-pagination'
 import { CatalogToolbar } from '@/features/catalog/components/catalog-toolbar'
@@ -52,7 +52,7 @@ function HomePage() {
           <FeaturedBanner />
         </div>
 
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-5 md:gap-8">
           <CatalogToolbar search={search} update={update} activeFilterCount={activeFilterCount} onOpenFilters={openFilters} />
           <p className="sr-only" aria-live="polite">
             {list.isPending ? 'Carregando NFTs' : data ? `${data.total} NFTs encontrados, página ${data.page} de ${Math.max(data.totalPages, 1)}` : ''}
@@ -71,6 +71,21 @@ function HomePage() {
             <SheetTitle>Filtros</SheetTitle>
             <SheetDescription>Os resultados atualizam a cada escolha.</SheetDescription>
           </SheetHeader>
+          {/* On mobile the sort lives here: the Figma has no sort control on the page. */}
+          <label className="flex flex-col gap-2 pt-2 text-[15px] font-bold md:hidden">
+            Ordenar por
+            <select
+              value={search.sort ?? 'recent'}
+              onChange={(e) => update({ sort: e.target.value as CatalogSort })}
+              className="h-10 rounded-md border border-border bg-transparent px-3 text-sm font-normal"
+            >
+              {CATALOG_SORTS.map((value) => (
+                <option key={value} value={value} className="bg-card">
+                  {CATALOG_SORT_LABELS[value]}
+                </option>
+              ))}
+            </select>
+          </label>
           <CatalogFilters facets={data?.facets} search={search} update={update} idPrefix="sheet" className="pt-2" />
         </SheetContent>
       </Sheet>

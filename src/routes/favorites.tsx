@@ -6,7 +6,6 @@ import type * as React from 'react'
 import { requireAuth } from '@/features/auth/guards'
 import { NftCard, NftCardSkeleton } from '@/features/catalog/components/nft-card'
 import { NFT_GRID_CLASS } from '@/features/catalog/components/nft-grid'
-import { FavoriteButton } from '@/features/favorites/components/favorite-button'
 import { favoriteItemsQueryOptions, favoritesQueryOptions } from '@/features/favorites/queries'
 import { useFavoriteIds } from '@/features/favorites/use-favorite'
 import { useDocumentTitle } from '@/shared/lib/use-document-title'
@@ -76,7 +75,7 @@ function FavoritesPage() {
         <ul className={NFT_GRID_CLASS} aria-label="NFTs favoritados">
           {visible.map((nft, index) => (
             <li key={nft.id}>
-              <NftCard nft={nft} priority={index < 3} action={<FavoriteButton nftId={nft.id} nftName={nft.name} />} />
+              <NftCard nft={nft} priority={index < 3} />
             </li>
           ))}
         </ul>
