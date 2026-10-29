@@ -6,8 +6,9 @@ import { z } from 'zod'
 
 import { PasswordChangeSchema, ProfileUpdateSchema, type ProfileUpdate, type User } from '@/contracts/account'
 import { ApiError } from '@/contracts/api-error'
+import { cn } from '@/shared/lib/utils'
 import { applyApiError, FormError } from '@/shared/lib/form-errors'
-import { Button } from '@/shared/ui/button'
+import { Button, mobilePill } from '@/shared/ui/button'
 import { EnsField } from '@/shared/ui/ens-field'
 import { TextField } from '@/shared/ui/text-field'
 import { toast } from '@/shared/ui/toaster'
@@ -149,7 +150,7 @@ export function ProfileForm({ user }: { user: User }) {
         </div>
       </div>
 
-      <Button type="submit" className="mt-[33px] w-[131px] self-start" disabled={busy || conflict}>
+      <Button type="submit" className={cn('mt-[33px] w-[131px] self-start', mobilePill)} disabled={busy || conflict}>
         {busy && <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />}
         Salvar
       </Button>

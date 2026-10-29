@@ -25,8 +25,8 @@ const heading = 'text-lg leading-4 font-bold'
 const link = 'text-left text-sm leading-[30px] transition-colors hover:text-text-accent'
 
 /** Footer from the Figma: feature medallions + newsletter, brand band, link columns. */
-/** Mobile frames of detail, cart, checkout and auth are app screens without the footer. */
-const APP_SCREENS = [/^\/nfts\//, /^\/cart$/, /^\/checkout$/, /^\/login$/, /^\/register$/]
+/** Mobile frames of detail, cart, checkout and auth are app screens without the footer (account pages follow them). */
+const APP_SCREENS = [/^\/nfts\//, /^\/cart$/, /^\/checkout$/, /^\/login$/, /^\/register$/, /^\/profile(\/|$)/]
 
 export function SiteFooter() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })

@@ -8,7 +8,7 @@ import { CHAIN_LABELS, CHAINS, type Chain } from '@/contracts/catalog'
 import { WALLET_TYPE_LABELS, WALLET_TYPES, WalletInputSchema, type Wallet, type WalletInput, type WalletType } from '@/contracts/wallet'
 import { applyApiError, FormError } from '@/shared/lib/form-errors'
 import { cn } from '@/shared/lib/utils'
-import { Button } from '@/shared/ui/button'
+import { Button, mobilePill } from '@/shared/ui/button'
 import { EnsField } from '@/shared/ui/ens-field'
 import type { FieldVariant } from '@/shared/ui/field'
 import { SelectField } from '@/shared/ui/select-field'
@@ -183,7 +183,7 @@ export function WalletForm({ user, wallet, defaults, onSaved, onCancel, variant 
       <FormError message={formError} />
       <WalletFields form={form} variant={variant} density={density} />
       <div className="flex flex-wrap gap-3">
-        <Button type="submit" disabled={mutation.isPending}>
+        <Button type="submit" disabled={mutation.isPending} className={cn(density === 'page' && mobilePill)}>
           {mutation.isPending && <Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />}
           {submitLabel}
         </Button>

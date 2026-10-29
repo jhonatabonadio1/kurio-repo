@@ -5,12 +5,12 @@ import { useLogout } from '@/features/auth/use-logout'
 import { cn } from '@/shared/lib/utils'
 import { OutOfScopeLink } from '@/shared/ui/out-of-scope'
 
-type Item =
+export type Item =
   | { label: string; icon: LucideIcon; to: '/profile' | '/profile/wallets' | '/favorites' }
   | { label: string; icon: LucideIcon; outOfScope: true }
 
 /** "Meu perfil" menu from the Figma (Desktop / Perfil do Colecionador and Carteiras). */
-const ITEMS: Item[] = [
+export const ACCOUNT_ITEMS: Item[] = [
   { label: 'Dados do perfil', icon: User, to: '/profile' },
   { label: 'Carteiras', icon: MapPin, to: '/profile/wallets' },
   { label: 'Atividade', icon: ShoppingCart, outOfScope: true },
@@ -33,7 +33,7 @@ export function AccountSidebar() {
         Meu perfil
       </h2>
       <ul className="flex overflow-x-auto max-lg:[scrollbar-width:none] lg:flex-col">
-        {ITEMS.map((item) => {
+        {ACCOUNT_ITEMS.map((item) => {
           const Icon = item.icon
           const content = (
             <>

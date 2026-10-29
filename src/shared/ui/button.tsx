@@ -47,4 +47,8 @@ function Button({
   )
 }
 
+/** Mobile frames: primary actions are full-width gradient pills ("Confirmar compra", "Finalizar"). */
+export const mobilePill =
+  'max-md:h-[50px] max-md:w-full max-md:rounded-full max-md:bg-gradient-to-r max-md:from-primary max-md:to-[#b5743f] max-md:text-[15px] max-md:text-ink max-md:shadow-lg'
+
 export { Button, buttonVariants }
