@@ -29,7 +29,7 @@ export const WalletInputSchema = z.object({
   secondaryAddress: z
     .string()
     .trim()
-    .regex(/^(0x[a-fA-F0-9]{40}|[a-z0-9-]{3,32}\.eth)$/, 'Use um endereço 0x ou um nome .eth.')
+    .regex(/^(0x[a-fA-F0-9]{40}|[a-z0-9-]{3,32}(\.[a-z0-9-]{1,32})*\.eth)$/, 'Use um endereço 0x ou um nome .eth.')
     .or(z.literal(''))
     .optional(),
   walletType: z.enum(WALLET_TYPES, { error: 'Selecione o tipo de carteira.' }),

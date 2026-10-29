@@ -59,8 +59,10 @@ export function ProfileForm({ user }: { user: User }) {
 
   const submit = form.handleSubmit(async (values) => {
     setFormError(null)
-    const dirty = form.formState.dirtyFields
-    const profileChanged = PROFILE_FIELDS.some((key) => dirty[key])
+    // Compared with the loaded values: formState.dirtyFields is only tracked
+    // once it has been read during render, so a first change could be missed.
+    const loaded = form.formState.defaultValues
+    const profileChanged = PROFILE_FIELDS.some((key) => (values[key] ?? '').trim() !== (loaded?.[key] ?? '').trim())
     const passwordFilled = Boolean(values.currentPassword || values.newPassword)
     if (!profileChanged && !passwordFilled) {
       toast('Nenhuma alteração para salvar.', 'info')
