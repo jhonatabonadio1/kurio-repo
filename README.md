@@ -133,7 +133,14 @@ pnpm lighthouse                 # terminal 2 — home and detail, mobile and des
 
 Config: `lighthouse/lighthouse.config.mjs`. Reports (HTML + JSON for every run), medians, tool versions and conditions: `lighthouse/reports/` (`summary.md`). Latest medians:
 
-<!-- lighthouse:summary -->
+| Page | Profile | Performance | Accessibility | Best Practices | SEO | LCP | CLS | TBT |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| home | mobile | **65** ⚠ | 100 | 100 | 100 | 4.6 s | 0 | 374 ms |
+| home | desktop | 97 | 100 | 100 | 100 | 1.0 s | 0 | 0 ms |
+| detail | mobile | **70** ⚠ | 100 | 100 | 100 | 4.4 s | 0 | 276 ms |
+| detail | desktop | 98 | 100 | 100 | 100 | 0.9 s | 0 | 19 ms |
+
+Median of 3 runs, Lighthouse 12.8.2, Chrome 153, production build with mocks (environment in `summary.md`).
 
 The mobile Performance score and its causes are explained in [ARCHITECTURE.md › Performance](./ARCHITECTURE.md#performance).
 

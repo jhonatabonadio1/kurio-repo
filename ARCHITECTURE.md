@@ -204,11 +204,11 @@ Audit: `pnpm lighthouse` (config in `lighthouse/lighthouse.config.mjs`, reports 
 
 What was done for it: shimmer skeletons with the content size (CLS 0), `width`/`height` and `srcset` (320/640/960 WebP) on every artwork, `fetchpriority="high"` + a `<link rel="preload">` for the home LCP image, route code splitting, preloading the two chunks Vite leaves behind dynamic imports (mock worker, home route), rendering before the worker starts, the `tough-cookie` stub, self-hosted variable font with `font-display: swap`, `robots.txt`.
 
-**Below target: mobile Performance (~70).** Desktop is 98 on both pages; Accessibility, Best Practices and SEO are 100 on all four. On the mobile profile (simulated slow 4G, 150 ms RTT, 1.6 Mbps, 4× CPU) the causes are:
+**Below target: mobile Performance (home 65, detail 70; single runs 62–70).** Desktop is 97–98 on both pages; Accessibility, Best Practices and SEO are 100 on all four. On the mobile profile (simulated slow 4G, 150 ms RTT, 1.6 Mbps, 4× CPU) the causes are:
 
 1. **The API runs in the browser.** No data exists until the MSW chunk (~55 KB gzip) has downloaded, the service worker has registered, and the first handler has answered. The mobile LCP element is the first catalog card image, which needs that data. With a real API this whole step disappears.
 2. **Client-only rendering.** About 300 KB gzip of JavaScript (React DOM, Router, Query, zod, Axios, MSW) has to download and run on a 4×-slower CPU before the first paint. The real, unthrottled numbers on the same run are FCP ~0.4 s and LCP ~0.8 s; the simulation turns each request round trip into ~0.6 s.
-3. **Main-thread cost** (TBT ~250 ms) comes from parsing that JavaScript and from starting the mock layer (fixtures, socket binding).
+3. **Main-thread cost** (TBT 280–450 ms, the noisiest metric between runs) comes from parsing that JavaScript and from starting the mock layer (fixtures, socket binding). The audit machine has 2 vCPUs; Lighthouse multiplies the observed CPU time by 4, so small timing differences move the score by a few points.
 
 The next steps for a production build would be a real API (removes cause 1), server rendering or prerendering of the home shell (cause 2), and moving the auth forms and dialogs out of the first chunk.
 
