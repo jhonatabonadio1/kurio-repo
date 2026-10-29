@@ -4,6 +4,10 @@ import { Heart, House, ScanLine, ShoppingCart, User } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 import { OutOfScopeLink } from '@/shared/ui/out-of-scope'
 
+// Circle cut out of the bar's top edge, 10px wider than the button on each side.
+const NOTCH_MASK = 'radial-gradient(circle at 50% 0, transparent 43px, #000 44px)'
+const NOTCH = { maskImage: NOTCH_MASK, WebkitMaskImage: NOTCH_MASK } as const
+
 /** Mobile tab bar from the Figma: home, favorites, scan (centre), cart, profile. */
 export function MobileTabBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
@@ -13,11 +17,13 @@ export function MobileTabBar() {
   const current = 'text-text-accent'
 
   return (
-    <nav
-      aria-label="Navegação inferior"
-      className="fixed inset-x-0 bottom-0 z-40 h-[76px] rounded-t-[28px] bg-card pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_rgba(10,6,4,0.45)] md:hidden"
-    >
-      <div className="mx-auto flex h-full max-w-[414px] items-center justify-between px-6">
+    <nav aria-label="Navegação inferior" className="fixed inset-x-0 bottom-0 z-40 h-[calc(76px+env(safe-area-inset-bottom))] md:hidden">
+      {/* Figma: the bar has a round notch at the top centre where the scan
+          button sits; the page shows through it. drop-shadow follows the cut. */}
+      <div aria-hidden className="absolute inset-0 drop-shadow-[0_-8px_18px_rgba(10,6,4,0.45)]">
+        <div className="h-full rounded-t-[28px] bg-card" style={NOTCH} />
+      </div>
+      <div className="relative mx-auto flex h-[76px] max-w-[414px] items-center justify-between px-6">
         <Link to="/" className={cn(item, pathname === '/' && current)} aria-label="Início" aria-current={pathname === '/' ? 'page' : undefined}>
           <House className="size-5" />
         </Link>
@@ -32,7 +38,7 @@ export function MobileTabBar() {
         <OutOfScopeLink
           feature="Escanear NFT"
           aria-label="Escanear NFT"
-          className="-mt-10 grid size-[65px] place-items-center rounded-full border-[6px] border-background bg-gradient-to-b from-primary to-[#9c5f2c] text-foreground"
+          className="grid size-[66px] -translate-y-8 place-items-center rounded-full bg-gradient-to-br from-primary/95 to-[#9c5f2c]/90 text-foreground shadow-[0_6px_16px_rgba(10,6,4,0.5)] backdrop-blur-sm"
         >
           <ScanLine className="size-6" />
         </OutOfScopeLink>
