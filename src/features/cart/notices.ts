@@ -5,7 +5,8 @@ import { useSyncExternalStore } from 'react'
  * shown next to the item until the user acts on it. Client-side only:
  * the cart itself always reflects current prices from the API.
  */
-export type CartNotice = { kind: 'price' | 'availability'; previousPrice: string | null; nftName: string }
+/** price = the new unit price from the event (shown before the cart refetch lands). */
+export type CartNotice = { kind: 'price' | 'availability'; previousPrice: string | null; price: string | null; nftName: string }
 
 let notices: ReadonlyMap<string, CartNotice> = new Map()
 const listeners = new Set<() => void>()

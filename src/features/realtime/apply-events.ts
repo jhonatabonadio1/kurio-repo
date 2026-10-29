@@ -75,10 +75,10 @@ export function applyNftUpdated(queryClient: QueryClient, raw: unknown) {
     const update = event.data.editions.find((e) => e.editionId === item.editionId)
     if (!update) continue
     if (update.price !== item.unitPrice) {
-      cartNotices.set(item.id, { kind: 'price', previousPrice: item.unitPrice, nftName: item.nft.name })
+      cartNotices.set(item.id, { kind: 'price', previousPrice: item.unitPrice, price: update.price, nftName: item.nft.name })
       toast(`Preço de ${item.nft.name} mudou de ${formatEth(item.unitPrice)} para ${formatEth(update.price)}.`, 'info')
     } else if (update.available < item.quantity) {
-      cartNotices.set(item.id, { kind: 'availability', previousPrice: null, nftName: item.nft.name })
+      cartNotices.set(item.id, { kind: 'availability', previousPrice: null, price: null, nftName: item.nft.name })
       toast(`Disponibilidade de ${item.nft.name} mudou: restam ${update.available}.`, 'info')
     }
   }

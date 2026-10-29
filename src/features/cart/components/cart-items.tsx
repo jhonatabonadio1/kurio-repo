@@ -136,7 +136,7 @@ export function CartItems({ items }: { items: CartItem[] }) {
                   ) : notice?.kind === 'price' ? (
                     <span>
                       Preço atualizado{notice.previousPrice ? ` de ${formatEth(notice.previousPrice)}` : ''} para{' '}
-                      {formatEth(item.unitPrice)}. O resumo foi recalculado.{' '}
+                      {formatEth(('price' in notice && notice.price) || item.unitPrice)}. O resumo foi recalculado.{' '}
                       <button type="button" className="font-bold underline" onClick={() => cartNotices.clear(item.id)}>
                         Entendi
                       </button>

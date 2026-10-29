@@ -70,7 +70,7 @@ export function NftStrip({ title, items }: { title: string; items: NftSummary[] 
             ))}
       </ul>
       {pages > 1 && (
-        <div className="-mt-2 flex justify-center gap-2" role="group" aria-label={`${title}: páginas`}>
+        <div className="-mt-2 flex justify-center" role="group" aria-label={`${title}: páginas`}>
           {Array.from({ length: pages }, (_, i) => (
             <button
               key={i}
@@ -78,8 +78,14 @@ export function NftStrip({ title, items }: { title: string; items: NftSummary[] 
               onClick={() => goTo(i)}
               aria-label={`Página ${i + 1} de ${pages}`}
               aria-current={i === page ? 'true' : undefined}
-              className={cn('size-3 rounded-full border-2 border-primary transition-colors', i === page ? 'bg-primary' : 'hover:bg-primary/40')}
-            />
+              // 24px target (WCAG 2.5.8) around the 12px dot from the Figma.
+              className="group grid size-6 place-items-center"
+            >
+              <span
+                aria-hidden
+                className={cn('size-3 rounded-full border-2 border-primary transition-colors', i === page ? 'bg-primary' : 'group-hover:bg-primary/40')}
+              />
+            </button>
           ))}
         </div>
       )}
