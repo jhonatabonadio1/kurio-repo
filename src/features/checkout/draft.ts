@@ -1,5 +1,5 @@
 import type { Chain } from '@/contracts/catalog'
-import type { Buyer } from '@/contracts/order'
+import type { Buyer, CreateOrderInput } from '@/contracts/order'
 import type { WalletType } from '@/contracts/wallet'
 
 /**
@@ -17,8 +17,13 @@ export type CheckoutDraft = {
   useOther?: boolean
   /** Desktop: "Observação do colecionador". */
   note?: string
-  /** Idempotency key for the order of this quote (survives refresh mid-submit). */
-  attempt?: { quoteId: string; key: string }
+  /**
+   * Idempotency key for the order of this quote (survives refresh mid-submit).
+   * `input` is kept only while the outcome is unknown (sent, no answer yet,
+   * timeout, network error): resending it with the same key can only return
+   * the order that already exists.
+   */
+  attempt?: { quoteId: string; key: string; input?: CreateOrderInput }
 }
 
 const KEY = 'kurio-checkout-draft'

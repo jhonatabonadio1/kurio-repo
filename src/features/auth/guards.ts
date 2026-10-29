@@ -10,8 +10,14 @@ import { sessionQueryOptions } from './session'
  * not on the first private request).
  */
 export async function requireAuth({ context, location }: { context: { queryClient: QueryClient }; location: ParsedLocation }) {
+  // An expired session (also one that expires during this check) keeps the
+  // "session expired" notice; the route guard and the session listener can race.
   const toLogin = () =>
-    redirect({ to: '/login', search: { redirect: location.href }, replace: true })
+    redirect({
+      to: '/login',
+      search: { redirect: location.href, ...(sessionStore.lastSignOut() === 'expired' && { expired: true }) },
+      replace: true,
+    })
   if (!sessionStore.token()) throw toLogin()
   const session = await context.queryClient.ensureQueryData(sessionQueryOptions())
   if (!session) throw toLogin()

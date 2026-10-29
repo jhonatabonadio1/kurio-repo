@@ -1,10 +1,9 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from '@tanstack/react-router'
 import * as React from 'react'
 
 import { ApiError } from '@/contracts/api-error'
 import type { Chain } from '@/contracts/catalog'
-import type { Buyer } from '@/contracts/order'
+import type { Buyer, CreateOrderInput } from '@/contracts/order'
 import type { Quote } from '@/contracts/quote'
 import type { WalletType } from '@/contracts/wallet'
 import { quoteQueryOptions } from '@/features/cart/queries'
@@ -14,7 +13,8 @@ import { newIdempotencyKey, usePlaceOrder } from './use-place-order'
 /** walletLabel is shown in the review dialog (name and short address). */
 export type OrderDetails = { walletId: string; walletLabel: string; buyer: Buyer; note?: string }
 export type Review = OrderDetails & { quote: Quote; provider: WalletType; network: Chain }
-export type SubmitError = { message: string; toCart: boolean }
+/** retry: the outcome is unknown, so the same request can be sent again. */
+export type SubmitError = { message: string; toCart: boolean; retry?: boolean }
 
 const messageOf = (e: unknown, fallback: string) => (e instanceof Error && e.message ? e.message : fallback)
 
@@ -31,7 +31,6 @@ const messageOf = (e: unknown, fallback: string) => (e instanceof Error && e.mes
  */
 export function useCheckoutFlow({ userId, cartVersion, network, provider }: { userId: string; cartVersion: number | undefined; network: Chain; provider: WalletType }) {
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
   const quote = useQuery({ ...quoteQueryOptions(cartVersion ?? -1, network), enabled: cartVersion !== undefined })
   const placeOrder = usePlaceOrder()
 
@@ -80,17 +79,24 @@ export function useCheckoutFlow({ userId, cartVersion, network, provider }: { us
     // One key per quote, kept across refreshes (sessionStorage).
     const saved = checkoutDraft.load(userId).attempt
     const key = saved?.quoteId === pending.quote.id ? saved.key : newIdempotencyKey()
-    checkoutDraft.update(userId, { attempt: { quoteId: pending.quote.id, key } })
+    const input = { quoteId: pending.quote.id, walletId: pending.walletId, network: pending.network, provider: pending.provider, buyer: pending.buyer, note: pending.note || undefined }
+    checkoutDraft.update(userId, { attempt: { quoteId: pending.quote.id, key, input } })
+    send(input, key)
+  }
+
+  /** "Tentar de novo" after a lost answer: the same request with the same key. */
+  const retry = () => {
+    const attempt = checkoutDraft.load(userId).attempt
+    if (!attempt?.input) return
+    setSubmitError(null)
+    send(attempt.input, attempt.key)
+  }
+
+  const send = (input: CreateOrderInput, key: string) => {
     placeOrder.mutate(
+      { input, idempotencyKey: key },
       {
-        input: { quoteId: pending.quote.id, walletId: pending.walletId, network: pending.network, provider: pending.provider, buyer: pending.buyer, note: pending.note || undefined },
-        idempotencyKey: key,
-      },
-      {
-        onSuccess: (order) => {
-          checkoutDraft.clear()
-          void navigate({ to: '/orders/$orderId', params: { orderId: order.id }, replace: true })
-        },
+        // Success navigates from usePlaceOrder (it also runs if this form unmounted).
         onError: (error) => {
           const code = error instanceof ApiError ? error.code : ''
           setSubmitError({
@@ -101,6 +107,7 @@ export function useCheckoutFlow({ userId, cartVersion, network, provider }: { us
                   ? error.message
                   : 'Não recebemos a confirmação do pedido. Tente de novo: o mesmo pedido será recuperado, sem cobrança duplicada.',
             toCart: code === 'AVAILABILITY_CONFLICT',
+            retry: !(error instanceof ApiError) || error.retryable,
           })
           if (code === 'QUOTE_STALE') void queryClient.invalidateQueries({ queryKey: quoteQueryOptions(cartVersion ?? -1, network).queryKey })
         },
@@ -116,6 +123,7 @@ export function useCheckoutFlow({ userId, cartVersion, network, provider }: { us
     confirm,
     review,
     submit,
+    retry,
     cancel,
     submitError,
     setSubmitError,

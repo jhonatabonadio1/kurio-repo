@@ -35,6 +35,11 @@ export function CheckoutNotices({ flow }: { flow: CheckoutFlow }) {
               Ajustar carrinho
             </Link>
           )}
+          {submitError.retry && (
+            <button type="button" onClick={flow.retry} disabled={flow.placing} className="self-start font-bold underline">
+              Tentar de novo
+            </button>
+          )}
         </p>
       )}
     </>

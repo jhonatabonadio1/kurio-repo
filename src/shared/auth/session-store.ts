@@ -27,6 +27,8 @@ function read(): StoredSession | null {
 }
 
 let current = read()
+/** Why the last session ended (null after a sign-in); the route guard tells "expired" apart. */
+let lastSignOut: 'logout' | 'expired' | null = null
 
 function write(session: StoredSession | null) {
   try {
@@ -43,10 +45,12 @@ export const sessionStore = {
   get: () => current,
   token: () => current?.token ?? null,
   userId: () => current?.userId ?? null,
+  lastSignOut: () => lastSignOut,
 
   signIn(session: StoredSession) {
     const previousUserId = current?.userId ?? null
     current = session
+    lastSignOut = null
     write(session)
     emit({ type: 'signed-in', session, previousUserId })
   },
@@ -56,6 +60,7 @@ export const sessionStore = {
     if (!current) return
     const previousUserId = current.userId
     current = null
+    lastSignOut = reason
     write(null)
     emit({ type: 'signed-out', reason, previousUserId })
   },

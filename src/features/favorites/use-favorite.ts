@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useRouterState } from '@tanstack/react-router'
 
 import type { Favorites } from '@/contracts/favorites'
-import { useSession } from '@/features/auth/session'
+import { sessionQueryOptions, useSession } from '@/features/auth/session'
+import { sessionStore } from '@/shared/auth/session-store'
 import { toast } from '@/shared/ui/toaster'
 import { setFavorite } from './api'
 import { favoriteKeys, favoritesQueryOptions } from './queries'
@@ -69,13 +70,33 @@ export function useFavorite(nftId: string, nftName: string) {
     },
   })
 
-  const toggle = () => {
-    if (!user) {
-      toast('Entre na sua conta para favoritar NFTs.', 'info')
-      void navigate({ to: '/login', search: { redirect: href } })
+  const toLogin = () => {
+    toast('Entre na sua conta para favoritar NFTs.', 'info')
+    void navigate({ to: '/login', search: { redirect: href } })
+  }
+
+  /** Toggles from the real list: waits for it (deduplicated) when it has not loaded yet. */
+  const toggleFor = (userId: string, renderedState: boolean | null) => {
+    const cached = queryClient.getQueryData<Favorites>(favoriteKeys.ids(userId))
+    if (cached) {
+      // Synchronous path: fast repeated clicks alternate from what is on screen.
+      mutation.mutate({ userId, nftId, favorite: !(renderedState ?? cached.nftIds.includes(nftId)) })
       return
     }
-    mutation.mutate({ userId: user.id, nftId, favorite: !favorite })
+    queryClient.ensureQueryData(favoritesQueryOptions(userId)).then(
+      (data) => mutation.mutate({ userId, nftId, favorite: !data.nftIds.includes(nftId) }),
+      () => toast('Não foi possível carregar seus favoritos. Tente novamente.', 'error'),
+    )
+  }
+
+  const toggle = () => {
+    if (user) return toggleFor(user.id, favorite)
+    // A token but no user yet: the session is still loading, not signed out.
+    if (!sessionStore.token()) return toLogin()
+    queryClient.ensureQueryData(sessionQueryOptions()).then(
+      (session) => (session ? toggleFor(session.user.id, null) : toLogin()),
+      () => toast('Não foi possível confirmar sua sessão. Tente novamente.', 'error'),
+    )
   }
 
   // Stable name + aria-pressed carries the state (no label that flips).

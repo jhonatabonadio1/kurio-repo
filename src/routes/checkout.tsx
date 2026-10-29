@@ -1,12 +1,15 @@
-import { useQuery } from '@tanstack/react-query'
+import { useIsMutating, useQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-router'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Loader2 } from 'lucide-react'
+import * as React from 'react'
 
 import { requireAuth } from '@/features/auth/guards'
 import { useSession } from '@/features/auth/session'
 import { cartQueryOptions, useCart } from '@/features/cart/queries'
 import { DesktopCheckout } from '@/features/checkout/components/desktop-checkout'
 import { MobileCheckout } from '@/features/checkout/components/mobile-checkout'
+import { checkoutDraft } from '@/features/checkout/draft'
+import { PLACE_ORDER_KEY, usePlaceOrder } from '@/features/checkout/use-place-order'
 import { pendingOrdersQueryOptions } from '@/features/orders/queries'
 import { walletsQueryOptions } from '@/features/wallets/queries'
 import { useDocumentTitle } from '@/shared/lib/use-document-title'
@@ -36,6 +39,8 @@ function CheckoutPage() {
   const wallets = useQuery(walletsQueryOptions(user.id))
   const pending = useQuery(pendingOrdersQueryOptions(user.id))
   const pendingOrder = pending.data?.orders[0]
+  const placing = useIsMutating({ mutationKey: PLACE_ORDER_KEY }) > 0
+  useRecoverOrder(user.id)
 
   const header = (
     <>
@@ -84,6 +89,17 @@ function CheckoutPage() {
     )
   }
 
+  // The order may be confirmed (cart emptied) before its answer arrives.
+  if (!cart.data?.items.length && placing) {
+    return (
+      <section role="status" className="mx-auto flex max-w-md flex-col items-center gap-4 py-24 text-center">
+        <Loader2 className="size-12 animate-spin text-text-accent motion-reduce:animate-none" aria-hidden />
+        <h1 className="text-2xl font-bold">Finalizando seu pedido…</h1>
+        <p className="text-sm text-text-secondary">Estamos confirmando o pedido com a rede. Ele não será criado de novo.</p>
+      </section>
+    )
+  }
+
   if (!cart.data?.items.length) {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center gap-4 py-24 text-center">
@@ -117,4 +133,18 @@ function CheckoutPage() {
       )}
     </div>
   )
+}
+
+/**
+ * A request whose answer never came (timeout, network, refresh mid-submit) is
+ * sent again once with the same idempotency key: the API answers with the
+ * order it already has, and usePlaceOrder opens it. No new order is created.
+ */
+function useRecoverOrder(userId: string) {
+  const placeOrder = usePlaceOrder()
+  const { mutate } = placeOrder
+  React.useEffect(() => {
+    const attempt = checkoutDraft.load(userId).attempt
+    if (attempt?.input) mutate({ input: attempt.input, idempotencyKey: attempt.key })
+  }, [userId, mutate])
 }

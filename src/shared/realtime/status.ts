@@ -10,6 +10,8 @@ export const realtimeStatus = {
   set(next: RealtimeStatus) {
     if (next === status) return
     status = next
+    // Visible state for debugging and E2E tests: <html data-realtime="connected">.
+    if (typeof document !== 'undefined') document.documentElement.dataset.realtime = next
     listeners.forEach((l) => l())
   },
   subscribe(listener: () => void) {
