@@ -1,7 +1,7 @@
 import { setupWorker } from 'msw/browser'
 
 import { env } from '@/env'
-import { applyConfigFromUrl } from './config'
+import { applyConfigFromUrl, setMockConfig } from './config'
 import { db } from './db/store'
 import { restHandlers } from './handlers'
 import { resumePendingOrders } from './lib/orders'
@@ -24,7 +24,31 @@ db.onReset(() => mockSocketServer.disconnectAll())
 
 export const worker = setupWorker(...restHandlers, mockSocketServer.handler)
 
+/**
+ * `?reset=1` restores the seed (mock DB) and clears the app's own storage
+ * (session, guest cart token, checkout draft), then reloads without the
+ * parameter. Combine with a scenario: `/?reset=1&scenario=slow`.
+ */
+function resetFromUrl(): boolean {
+  const url = new URL(window.location.href)
+  if (!url.searchParams.has('reset')) return false
+  db.reset()
+  try {
+    localStorage.removeItem('kurio-session')
+    localStorage.removeItem('kurio-cart-token')
+    sessionStorage.removeItem('kurio-checkout-draft')
+  } catch {
+    // Storage blocked: the mock DB reset still applies.
+  }
+  if (!url.searchParams.has('scenario')) setMockConfig({ scenario: 'default', latencyMs: null })
+  url.searchParams.delete('reset')
+  window.location.replace(url.href)
+  return true
+}
+
 export async function startMockWorker() {
+  // The page reloads right away; never resolve, so no request starts meanwhile.
+  if (resetFromUrl()) return new Promise<never>(() => undefined)
   applyConfigFromUrl(window.location.search)
   await worker.start({
     quiet: true,
@@ -33,4 +57,6 @@ export async function startMockWorker() {
   })
   // Orders left pending before a refresh settle now (or when due).
   resumePendingOrders()
+  // Demo panel (scenarios, reset, events); tests drive /__mocks/* instead.
+  if (!navigator.webdriver) void import('./panel/scenario-panel').then((m) => m.mountScenarioPanel())
 }
