@@ -105,3 +105,19 @@ test('logout clears private data; another user never sees the first one', async 
   await page.goto('/profile')
   await expect(page.getByLabel('Nome de exibição')).toHaveValue(USERS.bruno.displayName)
 })
+
+test('closing the login asked by a private page goes home instead of reopening it', async ({ page, mobile }) => {
+  test.skip(mobile, 'mobile login is a full screen without a close button')
+  await page.goto('/profile/wallets')
+  await expect(page).toHaveURL(/\/login\?redirect=%2Fprofile%2Fwallets/)
+  await page.getByRole('dialog').getByRole('button', { name: 'Fechar' }).click()
+  await expect(page).toHaveURL('/')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+
+  // From a public page, closing returns to it.
+  await page.goto('/nfts/emerald-ape-042')
+  await page.getByRole('button', { name: 'Favoritar', exact: true }).click()
+  await expect(page).toHaveURL(/\/login\?redirect=/)
+  await page.keyboard.press('Escape')
+  await expect(page).toHaveURL(/\/nfts\/emerald-ape-042/)
+})
