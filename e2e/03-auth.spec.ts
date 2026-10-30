@@ -118,6 +118,7 @@ test('closing the login asked by a private page goes home instead of reopening i
   await page.goto('/nfts/emerald-ape-042')
   await page.getByRole('button', { name: 'Favoritar', exact: true }).click()
   await expect(page).toHaveURL(/\/login\?redirect=/)
-  await page.keyboard.press('Escape')
+  await page.getByRole('dialog').getByRole('button', { name: 'Fechar' }).click()
   await expect(page).toHaveURL(/\/nfts\/emerald-ape-042/)
+  await expect(page.getByRole('dialog')).toHaveCount(0)
 })
