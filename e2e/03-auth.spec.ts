@@ -95,9 +95,13 @@ test('logout clears private data; another user never sees the first one', async 
 
   await login(page, 'bruno', { from: '' })
   await expect(page).toHaveURL(/\/favorites$/)
-  await expect(page.getByText('Sage Nomad #009')).toHaveCount(0)
+  // Only Bruno's own lists are checked: public recommendation strips may show any NFT.
+  const favorites = page.getByRole('list', { name: 'NFTs favoritados' })
+  await expect(page.getByRole('heading', { name: 'Nenhum favorito ainda' }).or(favorites)).toBeVisible()
+  await expect(favorites.getByText('Sage Nomad #009')).toHaveCount(0)
   await page.goto('/cart')
-  await expect(page.getByText('Emerald Ape #042')).toHaveCount(0)
+  await expect(page.getByText('Seu carrinho está vazio')).toBeVisible()
+  await expect(page.getByRole('list', { name: 'Itens do carrinho' })).toHaveCount(0)
   await page.goto('/profile')
   await expect(page.getByLabel('Nome de exibição')).toHaveValue(USERS.bruno.displayName)
 })
