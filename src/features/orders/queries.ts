@@ -1,7 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 
 import { isTerminalStatus, type Order } from '@/contracts/order'
-import { realtimeStatus } from '@/shared/realtime/status'
 import { fetchOrder, fetchPendingOrders } from './api'
 
 /** Private data: everything under ['me', userId] is dropped on logout/user switch. */
@@ -16,10 +15,12 @@ export const orderQueryOptions = (userId: string, id: string) =>
     queryKey: orderKeys.detail(userId, id),
     queryFn: ({ signal }) => fetchOrder(id, signal),
     staleTime: 10_000,
-    // Socket.IO delivers the result; poll only while pending and the socket is down.
+    // Socket.IO usually delivers the result first. While pending, a status check
+    // every 4 s is the safety net: an event can be lost while the socket is down
+    // or in the gap between reconnecting and re-authenticating.
     refetchInterval: (query) => {
       const order = query.state.data as Order | undefined
-      return order && !isTerminalStatus(order.status) && realtimeStatus.get() !== 'connected' ? 4_000 : false
+      return order && !isTerminalStatus(order.status) ? 4_000 : false
     },
   })
 

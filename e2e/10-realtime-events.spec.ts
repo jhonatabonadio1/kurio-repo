@@ -44,8 +44,15 @@ test('disconnect while the order is pending: reconnect, reconcile and no second 
   })
   await mocks.emit({ kind: 'disconnect' })
   await page.clock.runFor(3_500) // the payment settles while the socket is down
-  await page.clock.runFor(5_000) // reconnect backoff / status polling
-  await expect(page.getByText('Seus NFTs agora estão na sua carteira')).toBeVisible({ timeout: 15_000 })
+  // Reconnect backoff and the 4 s status check run on the fake clock: move it
+  // in steps until the receipt shows (the event may be lost; the check is not).
+  const receipt = page.getByText('Seus NFTs agora estão na sua carteira')
+  await expect
+    .poll(async () => {
+      await page.clock.runFor(1_000)
+      return receipt.isVisible()
+    }, { timeout: 15_000 })
+    .toBe(true)
   const seen = await page.evaluate(() => (window as unknown as { __rt: string[] }).__rt)
   expect(seen).toContain('disconnected')
 

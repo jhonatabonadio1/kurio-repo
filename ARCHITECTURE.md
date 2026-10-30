@@ -127,7 +127,7 @@ Rules (`src/features/realtime/apply-events.ts`):
 
 - REST is the source of truth; events are patches with versions.
 - **After a reconnect** (`io.on('reconnect')`) the client invalidates the active catalog, cart and order queries, so anything missed while offline is fetched again.
-- **Order pages poll** every 4 s only while the order is pending and the socket is not connected; with the socket up, the event settles it.
+- **Order pages poll** every 4 s while the order is pending. The event usually settles it first; the poll is the safety net for an event lost while the socket was down or between reconnecting and re-authenticating.
 - **Mock side:** every data change goes through the mock DB and publishes its event from there (`src/mocks/realtime.ts`), so REST answers and events always agree. A data reset drops every socket; clients reconnect and reconcile.
 - **Price/stock change in checkout:** the cart quote is invalidated; the new total differs from the total the user accepted, so "Confirmar compra" is disabled and "Os valores mudaram" asks for an explicit accept. The server also refuses an order on a stale quote (`QUOTE_STALE`).
 
@@ -159,7 +159,7 @@ Rules (`src/features/realtime/apply-events.ts`):
 | Quote | under the cart key | 60 s | refetched with `staleTime: 0` right before review |
 | Favorites | `['me', userId, 'favorites', …]` | 5 min / 60 s | optimistic toggle (below) |
 | Wallets | `['me', userId, 'wallets']` | 5 min | mutations answer with the full list → `setQueryData` |
-| Orders | `['me', userId, 'orders', …]` | 10 s / 0 | polling only while pending and offline |
+| Orders | `['me', userId, 'orders', …]` | 10 s / 0 | polling every 4 s only while pending |
 
 - **Retries:** queries retry at most 2 times, only when `retryable` (network, timeout, 5xx), with backoff 1 s → 2 s (max 4 s). 4xx never retries. Mutations never auto-retry; the order flow retries itself with the same idempotency key.
 - **Invalidation:** each mutation updates or invalidates exactly what it changed (cart and its quotes, favorites, wallets, session user after a profile save). Events patch or invalidate as described above.
