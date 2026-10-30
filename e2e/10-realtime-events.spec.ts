@@ -76,3 +76,11 @@ test('a pending order survives a refresh and is followed to the end', async ({ p
   await mocks.emit({ kind: 'replay', index: 0 })
   await expect(page.getByText('Seus NFTs agora estão na sua carteira')).toBeVisible()
 })
+
+test('nft.updated also reaches the catalog cards without a reload', async ({ page, mocks }) => {
+  await page.goto('/')
+  const price = page.locator('#catalogo h3', { hasText: 'Emerald Ape #042' }).locator('xpath=following-sibling::p[1]')
+  await expect(price).toContainText('1.19 ETH')
+  await mocks.emit({ kind: 'nft-price', nftId: 'emerald-ape-042', editionId: 'emerald-ape-042--aberta', price: '0.99' })
+  await expect(price).toContainText('0.99 ETH')
+})

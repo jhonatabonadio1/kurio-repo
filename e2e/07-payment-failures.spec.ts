@@ -86,3 +86,17 @@ test('no connection: the error offers "Tentar de novo" with the same request', a
   await expect(page).toHaveURL(/\/orders\/ord_/)
   expect(Object.keys((await mocks.db()).orders)).toHaveLength(1)
 })
+
+test.describe('forbidden', () => {
+  test('an order of another account answers 403 and shows no data', async ({ page, mocks, mobile }) => {
+    await login(page)
+    await addToCart(page, mobile, 'emerald-ape-042')
+    await checkoutReady(page)
+    await confirmPurchase(page)
+    await expect(page).toHaveURL(/\/orders\/ord_/)
+    await mocks.setScenario('forbidden')
+    await page.reload()
+    await expect(page.getByRole('heading', { name: 'Você não tem acesso a este pedido' })).toBeVisible()
+    await expect(page.getByText('ID da transação')).toHaveCount(0)
+  })
+})
