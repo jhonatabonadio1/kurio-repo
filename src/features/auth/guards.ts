@@ -23,3 +23,11 @@ export async function requireAuth({ context, location }: { context: { queryClien
   if (!session) throw toLogin()
   return { user: session.user }
 }
+
+/** Pages behind requireAuth (checkout, profile/*, favorites, orders/*). */
+const PRIVATE_PATHS = ['/checkout', '/profile', '/favorites', '/orders']
+
+export function isPrivatePath(href: string): boolean {
+  const path = href.split(/[?#]/)[0] ?? ''
+  return PRIVATE_PATHS.some((p) => path === p || path.startsWith(`${p}/`))
+}

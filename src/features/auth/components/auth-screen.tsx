@@ -11,6 +11,7 @@ import { useDocumentTitle } from '@/shared/lib/use-document-title'
 import { useMediaQuery } from '@/shared/lib/use-media-query'
 import { cn } from '@/shared/lib/utils'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/shared/ui/dialog'
+import { isPrivatePath } from '../guards'
 import { safeRedirect } from '../session'
 import { LoginForm, OrDivider, RegisterForm, SocialSignIn } from './auth-forms'
 
@@ -49,7 +50,9 @@ export function AuthScreen({ mode, search }: { mode: AuthMode; search: AuthSearc
   const navigate = useNavigate()
   const target = safeRedirect(search.redirect)
   const done = () => void navigate({ href: target, replace: true })
-  const close = () => void navigate({ href: search.redirect ? target : '/' })
+  // Closing without signing in goes back to the page that asked for login only
+  // when it is public; a private one would open this login again (guard).
+  const close = () => void navigate({ href: search.redirect && !isPrivatePath(target) ? target : '/' })
   useDocumentTitle(`${COPY[mode].title} — Kurio`)
 
   const expired = search.expired && (
