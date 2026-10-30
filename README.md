@@ -1,5 +1,7 @@
 # Kurio — NFT Marketplace
 
+**Live demo:** https://kurio-repo.vercel.app · **Repository:** https://github.com/jhonatabonadio1/kurio-repo
+
 Frontend challenge: discovery, purchase and collector account flows of an NFT marketplace, desktop and mobile, built from the Figma file. All APIs, wallets, payments and real-time events are simulated with MSW, in the browser.
 
 **Stack:** React 19 + TypeScript · TanStack Router · TanStack Query · Axios (REST) · socket.io-client · Tailwind CSS 4 + shadcn/ui · MSW 2 + `@mswjs/socket.io-binding` · Playwright · Lighthouse.
@@ -111,6 +113,8 @@ pnpm exec playwright install chromium   # once
 pnpm test:e2e                           # builds, serves on 4173, runs desktop (1440) + mobile (390)
 pnpm test:e2e:report                    # HTML report; traces are kept for failed tests
 ```
+
+On macOS/Windows, run `pnpm test:e2e --grep-invert visual` locally and the visual spec in Docker (below).
 
 - Specs map to the brief §9 list: `e2e/01-catalog` … `e2e/12-loading-errors`, plus `e2e/visual.spec.ts` (home, detail, cart and checkout screenshots).
 - Every test runs in its own browser context (clean storage = the seed). REST goes through the MSW handlers; real-time tests emit events through the mock Socket.IO server and the app receives them with `socket.io-client`.
