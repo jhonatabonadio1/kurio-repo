@@ -61,12 +61,14 @@ function ScenarioPanel() {
   }
 
   return (
-    <div className="fixed bottom-24 left-3 z-[70] md:bottom-4">
+    // Mobile: a slim tab on the left edge, mid-height, clear of the tab bar and
+    // the fixed buy/checkout bars. Desktop: bottom-left corner.
+    <div className="fixed top-1/2 left-0 z-[70] -translate-y-1/2 md:top-auto md:bottom-4 md:left-3 md:translate-y-0">
       {open ? (
         <section
           role="dialog"
           aria-label="Cenários da simulação"
-          className="flex w-[300px] max-w-[calc(100vw-24px)] flex-col gap-3 rounded-lg border border-border bg-card p-4 text-sm shadow-2xl"
+          className="ml-3 flex max-h-[85dvh] w-[300px] max-w-[calc(100vw-24px)] flex-col gap-3 overflow-y-auto rounded-lg border border-border bg-card p-4 text-sm shadow-2xl md:ml-0"
         >
           <div className="flex items-center justify-between">
             <h2 className="font-bold">Simulação (MSW)</h2>
@@ -136,11 +138,13 @@ function ScenarioPanel() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex items-center gap-1.5 rounded-full border border-border bg-card/95 px-3 py-2 text-xs shadow-lg hover:border-primary"
+          className="flex items-center gap-1.5 rounded-r-lg border border-l-0 border-border bg-card/95 px-1.5 py-3 text-xs shadow-lg hover:border-primary md:rounded-full md:border-l md:px-3 md:py-2"
           aria-label={`Simulação: cenário ${current.scenario}`}
         >
           <FlaskConical className="size-3.5 text-text-accent" aria-hidden />
-          <span aria-hidden>{current.scenario === 'default' ? 'Simulação' : current.scenario}</span>
+          <span aria-hidden className="max-md:hidden">
+            {current.scenario === 'default' ? 'Simulação' : current.scenario}
+          </span>
         </button>
       )}
     </div>

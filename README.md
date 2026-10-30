@@ -59,7 +59,7 @@ Coupons: `WELCOME10` (−10%), `KURIO25` (−25%), `OLD20` (expired). Anything e
 One scenario is active per tab. Choose it in any of these ways:
 
 - **URL:** add `?scenario=<name>` (and optionally `&latency=<ms>`) to any page, e.g. `/?scenario=slow`. It is kept for the tab (sessionStorage) until you pick another.
-- **Demo panel:** the small **"Simulação"** button at the bottom left opens a panel with every scenario, the latency, data reset and Socket.IO event buttons.
+- **Demo panel:** the **"Simulação"** button (bottom left on desktop, a small flask tab on the left edge on mobile) opens a panel with every scenario, the latency, data reset and Socket.IO event buttons. It is hidden in automated browsers (Playwright, Lighthouse).
 - **Tests:** `test.use({ scenario: 'slow' })` or `mocks.setScenario()` (`e2e/fixtures.ts`).
 
 **Reset:** add `?reset=1` to any URL (e.g. `/?reset=1` or `/?reset=1&scenario=flaky`), or use "Restaurar dados" in the panel. It restores the seed data, signs out, clears the guest cart and the checkout draft, and goes back to the default scenario (unless one is given).
